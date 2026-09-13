@@ -13,17 +13,17 @@ export class HttpError extends Error {
   }
 }
 
-type RequestOptions = Omit<RequestInit, 'body'> & { body?: unknown }
+type RequestOptions = Omit<RequestInit, 'body'> & { body?: unknown; skipAuth?: boolean }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const auth = useAuthStore()
-  const { body, headers, ...rest } = options
+  const { body, headers, skipAuth, ...rest } = options
 
   const response = await fetch(`${baseURL}${path}`, {
     ...rest,
     headers: {
       'Content-Type': 'application/json',
-      ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+      ...(auth.token && !skipAuth ? { Authorization: `Bearer ${auth.token}` } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

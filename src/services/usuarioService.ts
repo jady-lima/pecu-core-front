@@ -1,8 +1,12 @@
 import { http } from '@/services/http'
-import type { Usuario } from '@/types/usuario'
+import type { NovoUsuarioPayload, Usuario } from '@/types/usuario'
 
 export const usuarioService = {
   listAll() {
     return http.get<Usuario[]>('/usuarios')
+  },
+
+  create(payload: NovoUsuarioPayload) {
+    return http.post<Usuario>('/usuarios', payload)
   },
 }

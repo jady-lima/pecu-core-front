@@ -2,11 +2,18 @@
   <div class="min-h-screen bg-slate-50">
     <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
       <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-      <button class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
-        @click="handleLogout"
-      >
-        Sair
-      </button>
+      <div class="flex items-center gap-3">
+        <RouterLink v-if="auth.isAdmin" class="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
+          :to="{ name: 'usuarios-novo' }"
+        >
+          Novo usuário
+        </RouterLink>
+        <button class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
+          @click="handleLogout"
+        >
+          Sair
+        </button>
+      </div>
     </header>
 
     <main class="p-6">

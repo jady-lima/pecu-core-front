@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import type { Perfil } from '@/types/usuario'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean
+    roles?: Perfil[]
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,13 +23,40 @@ const router = createRouter({
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
     },
+    {
+      path: '/usuarios/novo',
+      name: 'usuarios-novo',
+      component: () => import('@/views/UsuarioNovoView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  if (!to.meta.public && !auth.isAuthenticated) {
+
+  if (to.meta.public) {
+    return
+  }
+
+  if (!auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  const requiredRoles = to.meta.roles
+  if (requiredRoles && requiredRoles.length > 0) {
+    if (auth.perfil === null) {
+      try {
+        await auth.fetchPerfil()
+      } catch {
+        auth.logout()
+        return { name: 'login', query: { redirect: to.fullPath } }
+      }
+    }
+
+    if (!auth.perfil || !requiredRoles.includes(auth.perfil as Perfil)) {
+      return { name: 'home' }
+    }
   }
 })
 
