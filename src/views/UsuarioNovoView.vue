@@ -26,7 +26,7 @@
             autocomplete="name"
             maxlength="150"
             @blur="validateNome"
-            @input="if (fieldErrors.nome) validateNome()"
+            @input="fieldErrors.nome && validateNome()"
           />
           <p v-if="fieldErrors.nome" class="mt-1 text-xs text-red-600">{{ fieldErrors.nome }}</p>
         </div>
@@ -41,7 +41,7 @@
             autocomplete="email"
             maxlength="150"
             @blur="validateUsername"
-            @input="if (fieldErrors.username) validateUsername()"
+            @input="fieldErrors.username && validateUsername()"
           />
           <p v-if="fieldErrors.username" class="mt-1 text-xs text-red-600">{{ fieldErrors.username }}</p>
         </div>
@@ -56,7 +56,7 @@
               :type="showSenha ? 'text' : 'password'"
               autocomplete="new-password"
               @blur="validateSenha"
-              @input="if (fieldErrors.senha) validateSenha()"
+              @input="fieldErrors.senha && validateSenha()"
             />
             <button class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-slate-500 hover:text-slate-700"
               type="button"

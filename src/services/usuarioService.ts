@@ -9,4 +9,8 @@ export const usuarioService = {
   create(payload: NovoUsuarioPayload) {
     return http.post<Usuario>('/usuarios', payload)
   },
+
+  remove(id: number | string) {
+    return http.delete<void>(`/usuarios/${id}`)
+  },
 }

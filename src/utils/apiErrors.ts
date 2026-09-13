@@ -57,5 +57,9 @@ export function getApiErrorMessage(err: unknown, fallback: string): string {
     return 'Você não tem permissão para realizar esta ação.'
   }
 
+  if (err.status === 404) {
+    return 'Usuário não encontrado.'
+  }
+
   return extractFromProblemDetail(err.body) ?? fallback
 }
