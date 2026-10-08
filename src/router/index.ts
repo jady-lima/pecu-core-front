@@ -19,6 +19,18 @@ const router = createRouter({
     },
 
     {
+      path: '/usuarios',
+      name: 'usuarios',
+      component: () => import('@/views/UsuarioView.vue'),
+    },
+
+    {
+      path: '/propriedades',
+      name: 'propriedades',
+      component: () => import('@/views/PropriedadeView.vue'),
+    },
+
+    {
       path: '/lotes',
       name: 'lotes',
       component: () => import('@/views/LoteView.vue'),
@@ -28,6 +40,18 @@ const router = createRouter({
       path: '/animais',
       name: 'animais',
       component: () => import('@/views/AnimalView.vue'),
+    },
+
+    {
+      path: '/pesagens',
+      name: 'pesagens',
+      component: () => import('@/views/PesagemView.vue'),
+    },
+
+    {
+      path: '/desempenho',
+      name: 'desempenho',
+      component: () => import('@/views/DesempenhoView.vue'),
     },
   ],
 })
@@ -44,4 +68,3 @@ router.beforeEach((to) => {
 })
 
 export default router
-
