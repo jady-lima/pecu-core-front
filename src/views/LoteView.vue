@@ -207,7 +207,7 @@ const propriedadeId = ref<number | null>(null)
 
 async function carregarLotes() {
   const response = await loteService.listAll()
-  lotes.value = response.data
+  lotes.value = response
 }
 
 function limparFormulario() {
