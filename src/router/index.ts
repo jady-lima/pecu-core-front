@@ -11,6 +11,7 @@ declare module 'vue-router' {
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+
   routes: [
     {
       path: '/login',
@@ -34,6 +35,40 @@ const router = createRouter({
       name: 'usuarios-editar',
       component: () => import('@/views/UsuarioFormView.vue'),
       meta: { roles: ['ADMIN'] },
+      path: '/usuarios',
+      name: 'usuarios',
+      component: () => import('@/views/UsuarioView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
+      path: '/propriedades',
+      name: 'propriedades',
+      component: () => import('@/views/PropriedadeView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/lotes',
+      name: 'lotes',
+      component: () => import('@/views/LoteView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/animais',
+      name: 'animais',
+      component: () => import('@/views/AnimalView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/pesagens',
+      name: 'pesagens',
+      component: () => import('@/views/PesagemView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/desempenho',
+      name: 'desempenho',
+      component: () => import('@/views/DesempenhoView.vue'),
+      meta: { roles: ['PRODUTOR'] },
     },
   ],
 })

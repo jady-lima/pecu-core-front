@@ -15,7 +15,10 @@ export class HttpError extends Error {
 
 type RequestOptions = Omit<RequestInit, 'body'> & { body?: unknown; skipAuth?: boolean }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   const auth = useAuthStore()
   const { body, headers, skipAuth, ...rest } = options
 
@@ -29,8 +32,20 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
-  if (response.status === 401) {
+  const tokenInvalido =
+    response.status === 401 ||
+    (response.status === 403 && path === '/auth/me')
+
+  if (tokenInvalido) {
     auth.logout()
+
+    // Não redireciona quando a própria tentativa de login falha.
+    if (
+      path !== '/auth/login' &&
+      window.location.pathname !== '/login'
+    ) {
+      window.location.replace('/login')
+    }
   }
 
   if (!response.ok) {
@@ -46,9 +61,48 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const http = {
-  get: <T>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: 'GET' }),
-  post: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>(path, { ...options, method: 'POST', body }),
-  put: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>(path, { ...options, method: 'PUT', body }),
-  patch: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>(path, { ...options, method: 'PATCH', body }),
-  delete: <T>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: 'DELETE' }),
+  get: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, {
+      ...options,
+      method: 'GET',
+    }),
+
+  post: <T>(
+    path: string,
+    body?: unknown,
+    options?: RequestOptions,
+  ) =>
+    request<T>(path, {
+      ...options,
+      method: 'POST',
+      body,
+    }),
+
+  put: <T>(
+    path: string,
+    body?: unknown,
+    options?: RequestOptions,
+  ) =>
+    request<T>(path, {
+      ...options,
+      method: 'PUT',
+      body,
+    }),
+
+  patch: <T>(
+    path: string,
+    body?: unknown,
+    options?: RequestOptions,
+  ) =>
+    request<T>(path, {
+      ...options,
+      method: 'PATCH',
+      body,
+    }),
+
+  delete: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, {
+      ...options,
+      method: 'DELETE',
+    }),
 }

@@ -1,5 +1,12 @@
 import { http } from '@/services/http'
-import type { AtualizarUsuarioPayload, NovoUsuarioPayload, Usuario } from '@/types/usuario'
+import type { AtualizarUsuarioPayload, NovoUsuarioPayload, Usuario, Perfil } from '@/types/usuario'
+
+interface UsuarioRequest {
+  nome: string
+  username: string
+  senha: string
+  perfil: Perfil
+}
 
 export const usuarioService = {
   listAll() {
