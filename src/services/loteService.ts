@@ -21,4 +21,12 @@ export const loteService = {
   remove(id: number | string) {
     return http.delete<void>(`/lotes/${id}`)
   },
+
+  definirMetaGmd(id: number | string, gmdEsperado: number) {
+    return http.put<Lote>(`/lotes/${id}/meta-gmd`, { gmdEsperado })
+  },
+
+  removerMetaGmd(id: number | string) {
+    return http.delete<void>(`/lotes/${id}/meta-gmd`)
+  },
 }
