@@ -71,6 +71,20 @@ const router = createRouter({
       meta: { roles: ['ADMIN', 'PRODUTOR'] },
     },
 
+    // Catálogos
+    {
+      path: '/vacinas',
+      name: 'vacinas',
+      component: () => import('@/views/vacinas/VacinaView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
+      path: '/metas-desempenho',
+      name: 'metas-desempenho',
+      component: () => import('@/views/metas/MetaDesempenhoView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+
     // Manejo
     {
       path: '/pesagens',

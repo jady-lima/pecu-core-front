@@ -54,6 +54,23 @@ const MODULOS_ADMIN: GrupoModulos[] = [
       },
     ],
   },
+  {
+    titulo: 'Catálogos',
+    modulos: [
+      {
+        rota: 'vacinas',
+        icone: '💉',
+        titulo: 'Vacinas',
+        descricao: 'Cadastre as vacinas usadas nos registros de vacinação.',
+      },
+      {
+        rota: 'metas-desempenho',
+        icone: '🎯',
+        titulo: 'Metas de desempenho',
+        descricao: 'Defina o GMD esperado para cada finalidade de lote.',
+      },
+    ],
+  },
 ]
 
 const MODULOS_PRODUTOR: GrupoModulos[] = [

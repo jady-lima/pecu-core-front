@@ -103,10 +103,14 @@
             <input
               v-model.number="capacidade"
               type="number"
-              min="1"
+              :min="capacidadeMinima"
               class="w-full rounded-md border border-slate-300 px-3 py-2"
               required
             />
+
+            <p v-if="editandoId !== null && ativosNoLoteEditado > 0" class="mt-1 text-xs text-slate-500">
+              Este lote tem {{ ativosNoLoteEditado }} animal(is) ativo(s); a capacidade não pode ser menor que isso.
+            </p>
           </div>
 
           <div>
@@ -169,7 +173,7 @@
             <tr>
               <th class="px-4 py-2 font-medium">Número</th>
               <th class="px-4 py-2 font-medium">Finalidade</th>
-              <th class="px-4 py-2 font-medium">Capacidade</th>
+              <th class="px-4 py-2 font-medium">Ocupação</th>
               <th class="px-4 py-2 font-medium">Data de criação</th>
               <th class="px-4 py-2 font-medium">Propriedade</th>
               <th v-if="auth.isAdmin" class="px-4 py-2 font-medium">Produtor</th>
@@ -187,8 +191,11 @@
                 {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
-                {{ lote.capacidade }}
+              <td
+                class="px-4 py-2"
+                :class="(ativosPorLote.get(lote.id) ?? 0) >= lote.capacidade ? 'font-medium text-amber-700' : 'text-slate-700'"
+              >
+                {{ ativosPorLote.get(lote.id) ?? 0 }}/{{ lote.capacidade }}
               </td>
 
               <td class="px-4 py-2 text-slate-700">
@@ -237,10 +244,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import type { Animal } from '@/types/animal'
 import { FINALIDADE_LOTE_LABEL, type FinalidadeLote, type Lote } from '@/types/lote'
 import type { Propriedade } from '@/types/propriedade'
 import type { Usuario } from '@/types/usuario'
@@ -248,6 +257,7 @@ import type { Usuario } from '@/types/usuario'
 const auth = useAuthStore()
 
 const lotes = ref<Lote[]>([])
+const animais = ref<Animal[]>([])
 const propriedades = ref<Propriedade[]>([])
 const usuarios = ref<Usuario[]>([])
 const loading = ref(true)
@@ -266,6 +276,24 @@ const propriedadeId = ref<number | null>(null)
 const propriedadePorId = computed(
   () => new Map(propriedades.value.map((propriedade) => [propriedade.id, propriedade])),
 )
+
+const ativosPorLote = computed(() => {
+  const contagem = new Map<number, number>()
+
+  for (const animal of animais.value) {
+    if (animal.status === 'ATIVO') {
+      contagem.set(animal.loteId, (contagem.get(animal.loteId) ?? 0) + 1)
+    }
+  }
+
+  return contagem
+})
+
+const ativosNoLoteEditado = computed(() =>
+  editandoId.value === null ? 0 : ativosPorLote.value.get(editandoId.value) ?? 0,
+)
+
+const capacidadeMinima = computed(() => Math.max(1, ativosNoLoteEditado.value))
 
 function nomeProdutor(id: number | null): string {
   if (id === null) {
@@ -393,6 +421,9 @@ onMounted(async () => {
   try {
     await Promise.all([
       carregarLotes(),
+      animalService.listAll().then((dados) => {
+        animais.value = dados
+      }),
       propriedadeService.listAll().then((dados) => {
         propriedades.value = dados
       }),
