@@ -3,7 +3,7 @@ import type { LoginCredentials, LoginResponse, UsuarioLogado } from '@/types/aut
 
 export const authService = {
   login(credentials: LoginCredentials) {
-    return http.post<LoginResponse>('/auth/login', credentials)
+    return http.post<LoginResponse>('/auth/login', credentials, { skipAuth: true })
   },
   
   me() {

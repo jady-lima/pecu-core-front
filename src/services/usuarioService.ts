@@ -1,5 +1,5 @@
 import { http } from '@/services/http'
-import type { Usuario, Perfil } from '@/types/usuario'
+import type { AtualizarUsuarioPayload, NovoUsuarioPayload, Usuario, Perfil } from '@/types/usuario'
 
 interface UsuarioRequest {
   nome: string
@@ -13,19 +13,19 @@ export const usuarioService = {
     return http.get<Usuario[]>('/usuarios')
   },
 
-  getById(id: number) {
+  getById(id: number | string) {
     return http.get<Usuario>(`/usuarios/${id}`)
   },
 
-  create(usuario: UsuarioRequest) {
-    return http.post<Usuario>('/usuarios', usuario)
+  create(payload: NovoUsuarioPayload) {
+    return http.post<Usuario>('/usuarios', payload)
   },
 
-  update(id: number, usuario: UsuarioRequest) {
-    return http.put<Usuario>(`/usuarios/${id}`, usuario)
+  update(id: number | string, payload: AtualizarUsuarioPayload) {
+    return http.put<Usuario>(`/usuarios/${id}`, payload)
   },
 
-  delete(id: number) {
-    return http.delete(`/usuarios/${id}`)
+  remove(id: number | string) {
+    return http.delete<void>(`/usuarios/${id}`)
   },
 }

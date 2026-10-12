@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import type { Perfil } from '@/types/usuario'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean
+    roles?: Perfil[]
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +25,16 @@ const router = createRouter({
       component: () => import('@/views/HomeView.vue'),
     },
     {
+      path: '/usuarios/novo',
+      name: 'usuarios-novo',
+      component: () => import('@/views/UsuarioFormView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
+      path: '/usuarios/:id/editar',
+      name: 'usuarios-editar',
+      component: () => import('@/views/UsuarioFormView.vue'),
+      meta: { roles: ['ADMIN'] },
       path: '/usuarios',
       name: 'usuarios',
       component: () => import('@/views/UsuarioView.vue'),
@@ -58,43 +76,29 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // O login é público e não precisa consultar o perfil.
   if (to.meta.public) {
-    return true
+    return
   }
 
-  // Usuários sem token precisam entrar novamente.
   if (!auth.isAuthenticated) {
-    return {
-      name: 'login',
-      query: { redirect: to.fullPath },
-    }
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Consulta o perfil se ainda não estiver carregado.
-  if (!auth.perfil) {
-    try {
-      await auth.fetchPerfil()
-    } catch (error) {
-      console.error('Falha ao validar a sessão:', error)
-
-      auth.logout()
-
-      return {
-        name: 'login',
-        query: { redirect: to.fullPath },
+  const requiredRoles = to.meta.roles
+  if (requiredRoles && requiredRoles.length > 0) {
+    if (auth.perfil === null) {
+      try {
+        await auth.fetchPerfil()
+      } catch {
+        auth.logout()
+        return { name: 'login', query: { redirect: to.fullPath } }
       }
     }
+
+    if (!auth.perfil || !requiredRoles.includes(auth.perfil as Perfil)) {
+      return { name: 'home' }
+    }
   }
-
-  // Verifica se o perfil tem acesso à rota solicitada.
-  const roles = to.meta.roles as string[] | undefined
-
-  if (roles && (!auth.perfil || !roles.includes(auth.perfil))) {
-    return { name: 'home' }
-  }
-
-  return true
 })
 
 export default router

@@ -8,9 +8,11 @@ const TOKEN_KEY = 'pecu_token'
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const perfil = ref<string | null>(null)
-  
+  const userId = ref<number | string | null>(null)
+
   const isAuthenticated = computed(() => token.value !== null)
   const isProdutor = computed(() => perfil.value === 'PRODUTOR')
+  const isAdmin = computed(() => perfil.value === 'ADMIN')
 
   async function login(credentials: LoginCredentials) {
     const data = await authService.login(credentials)
@@ -21,19 +23,24 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchPerfil() {
     const usuario = await authService.me()
     perfil.value = usuario.perfil
+    const id = usuario.id
+    userId.value = typeof id === 'number' || typeof id === 'string' ? id : null
   }
 
   function logout() {
     token.value = null
     perfil.value = null
+    userId.value = null
     localStorage.removeItem(TOKEN_KEY)
   }
 
   return {
     token,
     perfil,
+    userId,
     isAuthenticated,
     isProdutor,
+    isAdmin,
     login,
     fetchPerfil,
     logout,
