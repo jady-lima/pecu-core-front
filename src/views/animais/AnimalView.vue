@@ -1,25 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <h2 class="mb-4 text-xl font-semibold text-slate-900">
-        Animais
-      </h2>
-
+  <PageLayout
+    titulo="Animais"
+    subtitulo="Cadastros"
+  >
       <form
         v-if="animalStatus === null"
         @submit.prevent="salvarAnimal"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-4 text-lg font-semibold text-slate-900">
           {{ animalEditando ? `Editar animal - brinco ${animalEditando.brinco}` : 'Cadastrar animal' }}
@@ -177,7 +164,7 @@
       <form
         v-else
         @submit.prevent="salvarStatus"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-1 text-lg font-semibold text-slate-900">
           Alterar status - brinco {{ animalStatus.brinco }}
@@ -246,14 +233,15 @@
         </div>
       </form>
 
-      <p v-if="erro" class="mb-4 text-sm text-red-600">
+      <p v-if="erro" class="text-sm text-red-600">
         {{ erro }}
       </p>
 
-      <p v-if="sucesso" class="mb-4 text-sm text-green-700">
+      <p v-if="sucesso" class="text-sm text-green-700">
         {{ sucesso }}
       </p>
 
+      <section>
       <h3 class="mb-3 text-lg font-semibold text-slate-900">
         Animais cadastrados
       </h3>
@@ -269,49 +257,49 @@
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-100 text-slate-600">
             <tr>
-              <th class="px-4 py-2 font-medium">Brinco</th>
-              <th class="px-4 py-2 font-medium">Sexo</th>
-              <th class="px-4 py-2 font-medium">Nascimento</th>
-              <th class="px-4 py-2 font-medium">Peso atual</th>
-              <th class="px-4 py-2 font-medium">Lote</th>
-              <th class="px-4 py-2 font-medium">Propriedade</th>
-              <th v-if="auth.isAdmin" class="px-4 py-2 font-medium">Produtor</th>
-              <th class="px-4 py-2 font-medium">Status</th>
-              <th class="px-4 py-2 font-medium">Ações</th>
+              <th class="px-4 py-3 font-medium">Brinco</th>
+              <th class="px-4 py-3 font-medium">Sexo</th>
+              <th class="px-4 py-3 font-medium">Nascimento</th>
+              <th class="px-4 py-3 font-medium">Peso atual</th>
+              <th class="px-4 py-3 font-medium">Lote</th>
+              <th class="px-4 py-3 font-medium">Propriedade</th>
+              <th v-if="auth.isAdmin" class="px-4 py-3 font-medium">Produtor</th>
+              <th class="px-4 py-3 font-medium">Status</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
             <tr v-for="animal in animais" :key="animal.id">
-              <td class="px-4 py-2 font-medium text-slate-900">
+              <td class="px-4 py-3 font-medium text-slate-900">
                 {{ animal.brinco }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ SEXO_ANIMAL_LABEL[animal.sexo] ?? animal.sexo }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ formatarData(animal.dataNascimento) }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ formatarPeso(animal.pesoAtual) }} kg
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ lotePorId.get(animal.loteId) ? `Lote ${lotePorId.get(animal.loteId)!.numero}` : `Lote #${animal.loteId}` }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ propriedadeDoLote(animal.loteId)?.nome ?? '-' }}
               </td>
 
-              <td v-if="auth.isAdmin" class="px-4 py-2 text-slate-700">
+              <td v-if="auth.isAdmin" class="px-4 py-3 text-slate-700">
                 {{ nomeProdutor(propriedadeDoLote(animal.loteId)?.usuarioId ?? null) }}
               </td>
 
-              <td class="px-4 py-2">
+              <td class="px-4 py-3">
                 <span
                   class="rounded-full px-2 py-0.5 text-xs font-medium"
                   :class="STATUS_ANIMAL_CLASSE[animal.status]"
@@ -320,7 +308,7 @@
                 </span>
               </td>
 
-              <td class="px-4 py-2">
+              <td class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -348,12 +336,13 @@
       <p v-else class="text-slate-500">
         Nenhum animal encontrado.
       </p>
-    </main>
-  </div>
+      </section>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { animalService } from '@/services/animalService'
 import { carenciaService } from '@/services/carenciaService'

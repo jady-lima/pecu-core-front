@@ -1,17 +1,9 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'propriedades' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Propriedades
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
+  <PageLayout
+    :titulo="propriedade ? `Veterinários - ${propriedade.nome}` : 'Veterinários'"
+    subtitulo="Cadastros"
+    :voltar-para="{ name: 'propriedades' }"
+  >
       <p v-if="loading" class="text-slate-500">
         Carregando...
       </p>
@@ -24,23 +16,9 @@
       </div>
 
       <template v-else-if="propriedade">
-        <div class="mb-6">
-          <h2 class="text-xl font-semibold text-slate-900">
-            Veterinários - {{ propriedade.nome }}
-          </h2>
-
-          <p class="mt-1 text-sm text-slate-600">
-            {{ propriedade.localizacao }}
-          </p>
-
-          <p class="mt-2 text-sm text-slate-500">
-            Os veterinários vinculados podem consultar os lotes e animais desta propriedade e registrar pesagens, vacinações e alimentação.
-          </p>
-        </div>
-
         <form
           @submit.prevent="vincular"
-          class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+          class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
         >
           <h3 class="mb-4 text-lg font-semibold text-slate-900">
             Vincular veterinário
@@ -104,6 +82,7 @@
           </p>
         </form>
 
+        <section>
         <h3 class="mb-3 text-lg font-semibold text-slate-900">
           Veterinários vinculados
         </h3>
@@ -148,13 +127,14 @@
         <p v-else class="text-slate-500">
           Nenhum veterinário vinculado a esta propriedade.
         </p>
+        </section>
       </template>
-    </main>
-  </div>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useRoute } from 'vue-router'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'

@@ -1,24 +1,11 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <h2 class="mb-4 text-xl font-semibold text-slate-900">
-        Lotes
-      </h2>
-
+  <PageLayout
+    titulo="Lotes"
+    subtitulo="Cadastros"
+  >
       <form
         @submit.prevent="salvarLote"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-4 text-lg font-semibold text-slate-900">
           {{ editandoId ? 'Editar lote' : 'Cadastrar lote' }}
@@ -156,6 +143,7 @@
         </p>
       </form>
 
+      <section>
       <h3 class="mb-3 text-lg font-semibold text-slate-900">
         Lotes cadastrados
       </h3>
@@ -171,46 +159,46 @@
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-100 text-slate-600">
             <tr>
-              <th class="px-4 py-2 font-medium">Número</th>
-              <th class="px-4 py-2 font-medium">Finalidade</th>
-              <th class="px-4 py-2 font-medium">Ocupação</th>
-              <th class="px-4 py-2 font-medium">Data de criação</th>
-              <th class="px-4 py-2 font-medium">Propriedade</th>
-              <th v-if="auth.isAdmin" class="px-4 py-2 font-medium">Produtor</th>
-              <th class="px-4 py-2 font-medium">Ações</th>
+              <th class="px-4 py-3 font-medium">Número</th>
+              <th class="px-4 py-3 font-medium">Finalidade</th>
+              <th class="px-4 py-3 font-medium">Ocupação</th>
+              <th class="px-4 py-3 font-medium">Data de criação</th>
+              <th class="px-4 py-3 font-medium">Propriedade</th>
+              <th v-if="auth.isAdmin" class="px-4 py-3 font-medium">Produtor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
             <tr v-for="lote in lotes" :key="lote.id">
-              <td class="px-4 py-2 font-medium text-slate-900">
+              <td class="px-4 py-3 font-medium text-slate-900">
                 {{ lote.numero }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
               </td>
 
               <td
-                class="px-4 py-2"
+                class="px-4 py-3"
                 :class="(ativosPorLote.get(lote.id) ?? 0) >= lote.capacidade ? 'font-medium text-amber-700' : 'text-slate-700'"
               >
                 {{ ativosPorLote.get(lote.id) ?? 0 }}/{{ lote.capacidade }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ formatarData(lote.dataCriacao) }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ propriedadePorId.get(lote.propriedadeId)?.nome ?? `Propriedade #${lote.propriedadeId}` }}
               </td>
 
-              <td v-if="auth.isAdmin" class="px-4 py-2 text-slate-700">
+              <td v-if="auth.isAdmin" class="px-4 py-3 text-slate-700">
                 {{ nomeProdutor(propriedadePorId.get(lote.propriedadeId)?.usuarioId ?? null) }}
               </td>
 
-              <td class="px-4 py-2">
+              <td class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -237,12 +225,13 @@
       <p v-else class="text-slate-500">
         Nenhum lote encontrado.
       </p>
-    </main>
-  </div>
+      </section>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'

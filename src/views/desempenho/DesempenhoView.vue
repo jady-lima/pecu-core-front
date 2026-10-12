@@ -1,28 +1,9 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        to="/"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <div class="mb-6">
-        <h2 class="text-xl font-semibold text-slate-900">
-          Desempenho
-        </h2>
-
-        <p class="mt-1 text-sm text-slate-600">
-          Acompanhe a evolução do peso e o desempenho zootécnico dos seus animais.
-        </p>
-      </div>
-
-      <section class="mb-6">
+  <PageLayout
+    titulo="Desempenho"
+    subtitulo="Manejo"
+  >
+      <section>
         <h3 class="mb-3 text-lg font-semibold text-slate-900">
           Visão geral
         </h3>
@@ -84,7 +65,7 @@
         </div>
       </section>
 
-      <section class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <section class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <h3 class="text-lg font-semibold text-slate-900">
           Evolução do peso
         </h3>
@@ -106,7 +87,7 @@
         </div>
       </section>
 
-      <section class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <section class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <h3 class="text-lg font-semibold text-slate-900">
           Indicadores de desempenho
         </h3>
@@ -169,6 +150,9 @@
       <p class="text-sm text-slate-500">
         Os indicadores serão preenchidos com dados reais após a integração das regras de desempenho.
       </p>
-    </main>
-  </div>
+  </PageLayout>
 </template>
+
+<script setup lang="ts">
+import PageLayout from '@/components/PageLayout.vue'
+</script>
