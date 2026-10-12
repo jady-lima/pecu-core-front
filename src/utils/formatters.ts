@@ -12,6 +12,10 @@ export function formatarData(data: string): string {
   return `${dia}/${mes}/${ano}`
 }
 
+export function formatarMoeda(valor: number): string {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 export function formatarNumero(valor: number, casas = 2): string {
   return valor.toLocaleString('pt-BR', {
     minimumFractionDigits: 0,

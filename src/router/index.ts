@@ -93,6 +93,12 @@ const router = createRouter({
       meta: { roles: ['PRODUTOR'] },
     },
     {
+      path: '/alimentacoes',
+      name: 'alimentacoes',
+      component: () => import('@/views/alimentacoes/AlimentacaoView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
       path: '/desempenho',
       name: 'desempenho',
       component: () => import('@/views/desempenho/DesempenhoView.vue'),

@@ -102,6 +102,12 @@ const MODULOS_PRODUTOR: GrupoModulos[] = [
         descricao: 'Registre e consulte pesagens.',
       },
       {
+        rota: 'alimentacoes',
+        icone: '🌾',
+        titulo: 'Alimentação',
+        descricao: 'Registre a alimentação por animal ou por lote.',
+      },
+      {
         rota: 'desempenho',
         icone: '📊',
         titulo: 'Desempenho',
