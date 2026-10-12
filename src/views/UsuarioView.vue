@@ -15,7 +15,7 @@
       </div>
 
       <RouterLink
-        to="/"
+        :to="{ name: 'home' }"
         class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
       >
         Voltar
@@ -35,128 +35,27 @@
           </p>
         </div>
 
-        <button
-          @click="novoUsuario"
+        <RouterLink
+          :to="{ name: 'usuarios-novo' }"
           class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
         >
           + Novo usuário
-        </button>
+        </RouterLink>
       </div>
 
-      <!-- FORMULÁRIO -->
-
-      <form
-        v-if="mostrarFormulario"
-        @submit.prevent="salvarUsuario"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+      <p
+        v-if="erro"
+        class="mb-4 text-sm text-red-600"
       >
+        {{ erro }}
+      </p>
 
-        <h3 class="mb-4 text-lg font-semibold text-slate-900">
-          {{ editandoId ? 'Editar usuário' : 'Cadastrar usuário' }}
-        </h3>
-
-        <div class="grid gap-4 md:grid-cols-2">
-
-          <div>
-            <label
-              class="mb-1 block text-sm font-medium text-slate-700"
-            >
-              Nome
-            </label>
-
-            <input
-              v-model="nome"
-              type="text"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              class="mb-1 block text-sm font-medium text-slate-700"
-            >
-              E-mail
-            </label>
-
-            <input
-              v-model="username"
-              type="email"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              class="mb-1 block text-sm font-medium text-slate-700"
-            >
-              Senha
-            </label>
-
-            <input
-              v-model="senha"
-              type="password"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              class="mb-1 block text-sm font-medium text-slate-700"
-            >
-              Perfil
-            </label>
-
-            <select
-              v-model="perfil"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
-              required
-            >
-              <option value="ADMIN">
-                Administrador
-              </option>
-
-              <option value="PRODUTOR">
-                Produtor
-              </option>
-
-              <option value="VETERINARIO">
-                Veterinário
-              </option>
-            </select>
-          </div>
-
-        </div>
-
-        <div class="mt-5 flex gap-2">
-
-          <button
-            type="submit"
-            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
-            {{ editandoId ? 'Salvar alterações' : 'Cadastrar usuário' }}
-          </button>
-
-          <button
-            type="button"
-            @click="cancelarFormulario"
-            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-          >
-            Cancelar
-          </button>
-
-        </div>
-
-        <p
-          v-if="erro"
-          class="mt-3 text-sm text-red-600"
-        >
-          {{ erro }}
-        </p>
-
-      </form>
+      <p
+        v-if="sucesso"
+        class="mb-4 text-sm text-green-700"
+      >
+        {{ sucesso }}
+      </p>
 
       <!-- CARREGANDO -->
 
@@ -219,6 +118,12 @@
 
               <td class="px-4 py-3 font-medium text-slate-900">
                 {{ usuario.nome }}
+                <span
+                  v-if="usuario.id === auth.userId"
+                  class="ml-1 text-xs font-normal text-slate-500"
+                >
+                  (você)
+                </span>
               </td>
 
               <td class="px-4 py-3 text-slate-700">
@@ -226,26 +131,27 @@
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                {{ usuario.perfil }}
+                {{ PERFIL_LABEL[usuario.perfil] }}
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                {{ usuario.dataCriacao }}
+                {{ formatarDataHora(usuario.dataCriacao) }}
               </td>
 
               <td class="px-4 py-3">
 
                 <div class="flex gap-2">
 
-                  <button
-                    @click="editarUsuario(usuario)"
+                  <RouterLink
+                    :to="{ name: 'usuarios-editar', params: { id: usuario.id } }"
                     class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
                   >
                     Editar
-                  </button>
+                  </RouterLink>
 
                   <button
-                    @click="excluirUsuario(usuario.id)"
+                    v-if="usuario.id !== auth.userId"
+                    @click="excluirUsuario(usuario)"
                     class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
                   >
                     Excluir
@@ -277,112 +183,57 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { usuarioService } from '@/services/usuarioService'
-import type { Usuario, Perfil } from '@/types/usuario'
+import { getApiErrorMessage } from '@/utils/apiErrors'
+import { PERFIL_LABEL, type Usuario } from '@/types/usuario'
+
+const auth = useAuthStore()
 
 const usuarios = ref<Usuario[]>([])
 const loading = ref(true)
 const erro = ref('')
-
-const mostrarFormulario = ref(false)
-const editandoId = ref<number | null>(null)
-
-const nome = ref('')
-const username = ref('')
-const senha = ref('')
-const perfil = ref<Perfil>('PRODUTOR')
+const sucesso = ref('')
 
 async function carregarUsuarios() {
-  const response = await usuarioService.listAll()
-
-  usuarios.value = response
+  usuarios.value = await usuarioService.listAll()
 }
 
-function novoUsuario() {
-  limparFormulario()
+function formatarDataHora(valor: string) {
+  const data = new Date(valor)
 
-  mostrarFormulario.value = true
-}
+  if (Number.isNaN(data.getTime())) {
+    return valor
+  }
 
-function limparFormulario() {
-  nome.value = ''
-  username.value = ''
-  senha.value = ''
-  perfil.value = 'PRODUTOR'
-  editandoId.value = null
-  erro.value = ''
-}
-
-function cancelarFormulario() {
-  limparFormulario()
-
-  mostrarFormulario.value = false
-}
-
-function editarUsuario(usuario: Usuario) {
-  editandoId.value = usuario.id
-
-  nome.value = usuario.nome
-  username.value = usuario.username
-  senha.value = ''
-  perfil.value = usuario.perfil
-
-  erro.value = ''
-  mostrarFormulario.value = true
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth',
+  return data.toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
   })
 }
 
-async function salvarUsuario() {
-  erro.value = ''
-
-  try {
-    const dados = {
-      nome: nome.value,
-      username: username.value,
-      senha: senha.value,
-      perfil: perfil.value,
-    }
-
-    if (editandoId.value !== null) {
-      await usuarioService.update(
-        editandoId.value,
-        dados
-      )
-    } else {
-      await usuarioService.create(dados)
-    }
-
-    await carregarUsuarios()
-
-    cancelarFormulario()
-
-  } catch (err) {
-    console.error('Falha ao salvar usuário', err)
-
-    erro.value = 'Não foi possível salvar o usuário.'
+async function excluirUsuario(usuario: Usuario) {
+  if (usuario.id === auth.userId) {
+    return
   }
-}
 
-async function excluirUsuario(id: number) {
-  if (!confirm('Tem certeza que deseja excluir este usuário?')) {
+  if (!confirm(`Tem certeza que deseja excluir o usuário "${usuario.nome}"?`)) {
     return
   }
 
   erro.value = ''
+  sucesso.value = ''
 
   try {
-    await usuarioService.delete(id)
-
+    await usuarioService.remove(usuario.id)
     await carregarUsuarios()
-
+    sucesso.value = 'Usuário excluído com sucesso.'
   } catch (err) {
     console.error('Falha ao excluir usuário', err)
-
-    erro.value = 'Não foi possível excluir o usuário.'
+    erro.value = getApiErrorMessage(
+      err,
+      'Não foi possível excluir o usuário. Verifique se ele possui propriedades ou registros vinculados.',
+    )
   }
 }
 
@@ -391,8 +242,7 @@ onMounted(async () => {
     await carregarUsuarios()
   } catch (err) {
     console.error('Falha ao carregar usuários', err)
-
-    erro.value = 'Não foi possível carregar os usuários.'
+    erro.value = getApiErrorMessage(err, 'Não foi possível carregar os usuários.')
   } finally {
     loading.value = false
   }

@@ -3,7 +3,7 @@
     <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
       <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
       <RouterLink class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
-        :to="{ name: 'home' }"
+        :to="{ name: 'usuarios' }"
       >
         Voltar
       </RouterLink>
@@ -14,7 +14,7 @@
 
       <div v-else-if="initialError" class="w-full max-w-md rounded-lg bg-white p-8 shadow-sm ring-1 ring-slate-200">
         <p class="text-sm text-red-600">{{ initialError }}</p>
-        <RouterLink class="mt-4 inline-block text-sm font-medium text-slate-700 underline" :to="{ name: 'home' }">
+        <RouterLink class="mt-4 inline-block text-sm font-medium text-slate-700 underline" :to="{ name: 'usuarios' }">
           Voltar para a listagem
         </RouterLink>
       </div>
@@ -35,7 +35,7 @@
             v-model="form.nome"
             type="text"
             autocomplete="name"
-            maxlength="150"
+            maxlength="100"
             @blur="validateNome"
             @input="fieldErrors.nome && validateNome()"
           />
@@ -84,18 +84,22 @@
 
         <div class="mb-6">
           <label for="perfil" class="mb-1 block text-sm font-medium text-slate-700">Perfil</label>
-          <select class="w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none"
+          <select class="w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
             :class="fieldErrors.perfil ? 'border-red-400 focus:border-red-500' : 'border-slate-300 focus:border-slate-500'"
             id="perfil"
             v-model="form.perfil"
+            :disabled="isProprioUsuario"
             @change="validatePerfil"
           >
             <option value="" disabled>Selecione um perfil</option>
-            <option v-for="option in PERFIL_OPTIONS" :key="option.value" :value="option.value">
-              {{ option.label }}
+            <option v-for="(label, value) in PERFIL_LABEL" :key="value" :value="value">
+              {{ label }}
             </option>
           </select>
           <p v-if="fieldErrors.perfil" class="mt-1 text-xs text-red-600">{{ fieldErrors.perfil }}</p>
+          <p v-else-if="isProprioUsuario" class="mt-1 text-xs text-slate-500">
+            Você não pode alterar o seu próprio perfil.
+          </p>
         </div>
 
         <p v-if="generalError" class="mb-4 text-sm text-red-600">{{ generalError }}</p>
@@ -116,15 +120,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usuarioService } from '@/services/usuarioService'
+import { useAuthStore } from '@/stores/auth'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import { HttpError } from '@/services/http'
-import type { AtualizarUsuarioPayload, NovoUsuarioPayload, Perfil } from '@/types/usuario'
-
-const PERFIL_OPTIONS: { value: Perfil; label: string }[] = [
-  { value: 'ADMIN', label: 'Administrador' },
-  { value: 'PRODUTOR', label: 'Produtor' },
-  { value: 'VETERINARIO', label: 'Veterinário' },
-]
+import { PERFIL_LABEL, type AtualizarUsuarioPayload, type NovoUsuarioPayload, type Perfil } from '@/types/usuario'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SENHA_MIN_LENGTH = 6
@@ -137,6 +136,11 @@ const usuarioId = computed(() => {
   return typeof raw === 'string' && raw !== '' ? raw : null
 })
 const isEdicao = computed(() => usuarioId.value !== null)
+
+const auth = useAuthStore()
+const isProprioUsuario = computed(
+  () => isEdicao.value && auth.userId !== null && String(auth.userId) === usuarioId.value,
+)
 
 const form = reactive({
   nome: '',
@@ -277,7 +281,7 @@ async function handleSubmit() {
     }
 
     setTimeout(() => {
-      router.push({ name: 'home' })
+      router.push({ name: 'usuarios' })
     }, 1200)
   } catch (err) {
     if (err instanceof HttpError && err.status === 401) {

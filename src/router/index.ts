@@ -25,6 +25,12 @@ const router = createRouter({
       component: () => import('@/views/HomeView.vue'),
     },
     {
+      path: '/usuarios',
+      name: 'usuarios',
+      component: () => import('@/views/UsuarioView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
       path: '/usuarios/novo',
       name: 'usuarios-novo',
       component: () => import('@/views/UsuarioFormView.vue'),
@@ -34,10 +40,6 @@ const router = createRouter({
       path: '/usuarios/:id/editar',
       name: 'usuarios-editar',
       component: () => import('@/views/UsuarioFormView.vue'),
-      meta: { roles: ['ADMIN'] },
-      path: '/usuarios',
-      name: 'usuarios',
-      component: () => import('@/views/UsuarioView.vue'),
       meta: { roles: ['ADMIN'] },
     },
     {
@@ -95,7 +97,7 @@ router.beforeEach(async (to) => {
       }
     }
 
-    if (!auth.perfil || !requiredRoles.includes(auth.perfil as Perfil)) {
+    if (!auth.perfil || !requiredRoles.includes(auth.perfil)) {
       return { name: 'home' }
     }
   }
