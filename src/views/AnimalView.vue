@@ -77,16 +77,31 @@
 
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">
-              ID do lote
+              Lote
             </label>
 
-            <input
+            <select
               v-model.number="loteId"
-              type="number"
-              min="1"
               class="w-full rounded-md border border-slate-300 px-3 py-2"
               required
-            />
+              :disabled="lotes.length === 0"
+            >
+              <option disabled value="">
+                Selecione um lote
+              </option>
+
+              <option
+                v-for="lote in lotes"
+                :key="lote.id"
+                :value="lote.id"
+              >
+                Lote {{ lote.numero }} — Propriedade {{ lote.propriedadeId }}
+              </option>
+            </select>
+
+            <p v-if="lotes.length === 0" class="mt-1 text-sm text-slate-500">
+              Nenhum lote disponível. Cadastre um lote antes de cadastrar um animal.
+            </p>
           </div>
 
         </div>
@@ -94,7 +109,8 @@
         <div class="mt-5 flex gap-2">
           <button
             type="submit"
-            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            :disabled="lotes.length === 0"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {{ editandoId ? 'Salvar alterações' : 'Cadastrar animal' }}
           </button>
@@ -154,7 +170,7 @@
               </td>
 
               <td class="px-4 py-2 text-slate-700">
-                {{ animal.loteId }}
+                {{ nomeLote(animal.loteId) }}
               </td>
 
               <td class="px-4 py-2 text-slate-700">
@@ -193,9 +209,17 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { animalService } from '@/services/animalService'
+import { http } from '@/services/http'
 import type { Animal, SexoAnimal } from '@/types/animal'
 
+interface LoteOpcao {
+  id: number
+  numero: number
+  propriedadeId: number
+}
+
 const animais = ref<Animal[]>([])
+const lotes = ref<LoteOpcao[]>([])
 const loading = ref(true)
 const erro = ref('')
 
@@ -209,7 +233,22 @@ const loteId = ref<number | null>(null)
 
 async function carregarAnimais() {
   const response = await animalService.listAll()
-  animais.value = response.data
+  animais.value = response
+}
+
+async function carregarLotes() {
+  const response = await http.get<LoteOpcao[]>('/lotes')
+  lotes.value = response
+}
+
+function nomeLote(id: number): string {
+  const lote = lotes.value.find((lote) => lote.id === id)
+
+  if (!lote) {
+    return 'Lote não encontrado'
+  }
+
+  return `Lote ${lote.numero} — Propriedade ${lote.propriedadeId}`
 }
 
 function limparFormulario() {
@@ -243,7 +282,7 @@ async function salvarAnimal() {
     limparFormulario()
   } catch (err) {
     console.error('Falha ao salvar animal', err)
-    erro.value = 'Não foi possível salvar o animal. Verifique o brinco e o lote informado.'
+    erro.value = 'Não foi possível salvar o animal. Verifique o brinco e o lote selecionado.'
   }
 }
 
@@ -285,8 +324,18 @@ onMounted(async () => {
   } catch (err) {
     console.error('Falha ao carregar animais', err)
     erro.value = 'Não foi possível carregar os animais.'
-  } finally {
-    loading.value = false
   }
+
+  try {
+    await carregarLotes()
+  } catch (err) {
+    console.error('Falha ao carregar lotes', err)
+
+    if (!erro.value) {
+      erro.value = 'Não foi possível carregar os lotes disponíveis.'
+    }
+  }
+
+  loading.value = false
 })
 </script>
