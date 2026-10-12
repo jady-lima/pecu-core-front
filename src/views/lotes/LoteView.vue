@@ -2,6 +2,13 @@
   <div class="min-h-screen bg-slate-50">
     <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
       <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
+
+      <RouterLink
+        :to="{ name: 'home' }"
+        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+      >
+        Voltar para Home
+      </RouterLink>
     </header>
 
     <main class="p-6">
@@ -19,6 +26,37 @@
 
         <div class="grid gap-4 md:grid-cols-2">
 
+          <div class="md:col-span-2">
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Propriedade
+            </label>
+
+            <select
+              v-model="propriedadeId"
+              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+              required
+            >
+              <option :value="null" disabled>
+                Selecione a propriedade
+              </option>
+
+              <option
+                v-for="propriedade in propriedades"
+                :key="propriedade.id"
+                :value="propriedade.id"
+              >
+                {{ descricaoPropriedade(propriedade) }}
+              </option>
+            </select>
+
+            <p
+              v-if="!loading && propriedades.length === 0"
+              class="mt-1 text-xs text-amber-700"
+            >
+              Nenhuma propriedade cadastrada. Cadastre uma em Propriedades antes de criar lotes.
+            </p>
+          </div>
+
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">
               Número
@@ -31,6 +69,10 @@
               class="w-full rounded-md border border-slate-300 px-3 py-2"
               required
             />
+
+            <p class="mt-1 text-xs text-slate-500">
+              Deve ser único dentro da propriedade.
+            </p>
           </div>
 
           <div>
@@ -40,14 +82,16 @@
 
             <select
               v-model="finalidade"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
+              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+              required
             >
-              <option value="CORTE">Corte</option>
-              <option value="RECRIA">Recria</option>
-              <option value="ENGORDA">Engorda</option>
-              <option value="REPRODUCAO">Reprodução</option>
-              <option value="QUARENTENA">Quarentena</option>
-              <option value="DESMAME">Desmame</option>
+              <option
+                v-for="(label, valor) in FINALIDADE_LOTE_LABEL"
+                :key="valor"
+                :value="valor"
+              >
+                {{ label }}
+              </option>
             </select>
           </div>
 
@@ -78,28 +122,15 @@
             />
           </div>
 
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">
-              ID da propriedade
-            </label>
-
-            <input
-              v-model.number="propriedadeId"
-              type="number"
-              min="1"
-              class="w-full rounded-md border border-slate-300 px-3 py-2"
-              required
-            />
-          </div>
-
         </div>
 
         <div class="mt-5 flex gap-2">
           <button
             type="submit"
-            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            :disabled="salvando"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
           >
-            {{ editandoId ? 'Salvar alterações' : 'Cadastrar lote' }}
+            {{ salvando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar lote' }}
           </button>
 
           <button
@@ -115,7 +146,15 @@
         <p v-if="erro" class="mt-3 text-sm text-red-600">
           {{ erro }}
         </p>
+
+        <p v-if="sucesso" class="mt-3 text-sm text-green-700">
+          {{ sucesso }}
+        </p>
       </form>
+
+      <h3 class="mb-3 text-lg font-semibold text-slate-900">
+        Lotes cadastrados
+      </h3>
 
       <p v-if="loading" class="text-slate-500">
         Carregando...
@@ -133,18 +172,19 @@
               <th class="px-4 py-2 font-medium">Capacidade</th>
               <th class="px-4 py-2 font-medium">Data de criação</th>
               <th class="px-4 py-2 font-medium">Propriedade</th>
+              <th v-if="auth.isAdmin" class="px-4 py-2 font-medium">Produtor</th>
               <th class="px-4 py-2 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
             <tr v-for="lote in lotes" :key="lote.id">
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-2 font-medium text-slate-900">
                 {{ lote.numero }}
               </td>
 
               <td class="px-4 py-2 text-slate-700">
-                {{ lote.finalidade }}
+                {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
               </td>
 
               <td class="px-4 py-2 text-slate-700">
@@ -152,16 +192,21 @@
               </td>
 
               <td class="px-4 py-2 text-slate-700">
-                {{ lote.dataCriacao }}
+                {{ formatarData(lote.dataCriacao) }}
               </td>
 
               <td class="px-4 py-2 text-slate-700">
-                {{ lote.propriedadeId }}
+                {{ propriedadePorId.get(lote.propriedadeId)?.nome ?? `Propriedade #${lote.propriedadeId}` }}
+              </td>
+
+              <td v-if="auth.isAdmin" class="px-4 py-2 text-slate-700">
+                {{ nomeProdutor(propriedadePorId.get(lote.propriedadeId)?.usuarioId ?? null) }}
               </td>
 
               <td class="px-4 py-2">
                 <div class="flex gap-2">
                   <button
+                    type="button"
                     @click="editarLote(lote)"
                     class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
                   >
@@ -169,7 +214,8 @@
                   </button>
 
                   <button
-                    @click="excluirLote(lote.id)"
+                    type="button"
+                    @click="excluirLote(lote)"
                     class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
                   >
                     Excluir
@@ -189,13 +235,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { loteService } from '@/services/loteService'
-import type { FinalidadeLote, Lote } from '@/types/lote'
+import { propriedadeService } from '@/services/propriedadeService'
+import { usuarioService } from '@/services/usuarioService'
+import { getApiErrorMessage } from '@/utils/apiErrors'
+import { FINALIDADE_LOTE_LABEL, type FinalidadeLote, type Lote } from '@/types/lote'
+import type { Propriedade } from '@/types/propriedade'
+import type { Usuario } from '@/types/usuario'
+
+const auth = useAuthStore()
 
 const lotes = ref<Lote[]>([])
+const propriedades = ref<Propriedade[]>([])
+const usuarios = ref<Usuario[]>([])
 const loading = ref(true)
+const salvando = ref(false)
 const erro = ref('')
+const sucesso = ref('')
 
 const editandoId = ref<number | null>(null)
 
@@ -205,9 +263,33 @@ const capacidade = ref<number | null>(null)
 const dataCriacao = ref('')
 const propriedadeId = ref<number | null>(null)
 
+const propriedadePorId = computed(
+  () => new Map(propriedades.value.map((propriedade) => [propriedade.id, propriedade])),
+)
+
+function nomeProdutor(id: number | null): string {
+  if (id === null) {
+    return '-'
+  }
+
+  return usuarios.value.find((usuario) => usuario.id === id)?.nome ?? `Usuário #${id}`
+}
+
+function descricaoPropriedade(propriedade: Propriedade): string {
+  if (auth.isAdmin) {
+    return `${propriedade.nome} - ${nomeProdutor(propriedade.usuarioId)}`
+  }
+
+  return `${propriedade.nome} (${propriedade.localizacao})`
+}
+
+function formatarData(data: string) {
+  const [ano, mes, dia] = data.split('-')
+  return `${dia}/${mes}/${ano}`
+}
+
 async function carregarLotes() {
-  const response = await loteService.listAll()
-  lotes.value = response
+  lotes.value = await loteService.listAll()
 }
 
 function limparFormulario() {
@@ -221,27 +303,44 @@ function limparFormulario() {
 
 async function salvarLote() {
   erro.value = ''
+  sucesso.value = ''
+
+  if (
+    numero.value === null ||
+    capacidade.value === null ||
+    propriedadeId.value === null ||
+    !dataCriacao.value
+  ) {
+    erro.value = 'Preencha todos os campos do lote.'
+    return
+  }
+
+  salvando.value = true
 
   try {
-    const dados = {
-      numero: numero.value!,
+    const payload = {
+      numero: numero.value,
       finalidade: finalidade.value,
-      capacidade: capacidade.value!,
+      capacidade: capacidade.value,
       dataCriacao: dataCriacao.value,
-      propriedadeId: propriedadeId.value!,
+      propriedadeId: propriedadeId.value,
     }
 
-    if (editandoId.value) {
-      await loteService.update(editandoId.value, dados)
+    if (editandoId.value !== null) {
+      await loteService.update(editandoId.value, payload)
+      sucesso.value = 'Lote atualizado com sucesso.'
     } else {
-      await loteService.create(dados)
+      await loteService.create(payload)
+      sucesso.value = 'Lote cadastrado com sucesso.'
     }
 
     await carregarLotes()
     limparFormulario()
   } catch (err) {
     console.error('Falha ao salvar lote', err)
-    erro.value = 'Não foi possível salvar o lote.'
+    erro.value = getApiErrorMessage(err, 'Não foi possível salvar o lote.')
+  } finally {
+    salvando.value = false
   }
 }
 
@@ -252,6 +351,8 @@ function editarLote(lote: Lote) {
   capacidade.value = lote.capacidade
   dataCriacao.value = lote.dataCriacao
   propriedadeId.value = lote.propriedadeId
+  erro.value = ''
+  sucesso.value = ''
 
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -259,35 +360,53 @@ function editarLote(lote: Lote) {
 function cancelarEdicao() {
   limparFormulario()
   erro.value = ''
+  sucesso.value = ''
 }
 
-async function excluirLote(id: number) {
-  if (!confirm('Tem certeza que deseja excluir este lote?')) {
+async function excluirLote(lote: Lote) {
+  if (!confirm(`Tem certeza que deseja excluir o lote ${lote.numero}?`)) {
     return
   }
 
   erro.value = ''
+  sucesso.value = ''
 
   try {
-    await loteService.delete(id)
+    await loteService.remove(lote.id)
+
+    if (editandoId.value === lote.id) {
+      limparFormulario()
+    }
+
     await carregarLotes()
+    sucesso.value = 'Lote excluído com sucesso.'
   } catch (err) {
     console.error('Falha ao excluir lote', err)
-    erro.value = 'Não foi possível excluir o lote. Verifique se existem animais ativos nesse lote.'
+    erro.value = getApiErrorMessage(
+      err,
+      'Não foi possível excluir o lote. Verifique se existem animais ativos nesse lote.',
+    )
   }
 }
 
 onMounted(async () => {
   try {
-    await carregarLotes()
+    await Promise.all([
+      carregarLotes(),
+      propriedadeService.listAll().then((dados) => {
+        propriedades.value = dados
+      }),
+      auth.isAdmin
+        ? usuarioService.listAll().then((dados) => {
+            usuarios.value = dados
+          })
+        : Promise.resolve(),
+    ])
   } catch (err) {
     console.error('Falha ao carregar lotes', err)
-    erro.value = 'Não foi possível carregar os lotes.'
+    erro.value = getApiErrorMessage(err, 'Não foi possível carregar os lotes.')
   } finally {
     loading.value = false
   }
 })
 </script>
-
-
-

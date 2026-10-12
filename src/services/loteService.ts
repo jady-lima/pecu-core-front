@@ -1,24 +1,24 @@
 import { http } from '@/services/http'
-import type { Lote } from '@/types/lote'
+import type { Lote, LotePayload } from '@/types/lote'
 
 export const loteService = {
   listAll() {
     return http.get<Lote[]>('/lotes')
   },
 
-  getById(id: number) {
+  getById(id: number | string) {
     return http.get<Lote>(`/lotes/${id}`)
   },
 
-  create(lote: Omit<Lote, 'id'>) {
-    return http.post<Lote>('/lotes', lote)
+  create(payload: LotePayload) {
+    return http.post<Lote>('/lotes', payload)
   },
 
-  update(id: number, lote: Omit<Lote, 'id'>) {
-    return http.put<Lote>(`/lotes/${id}`, lote)
+  update(id: number | string, payload: LotePayload) {
+    return http.put<Lote>(`/lotes/${id}`, payload)
   },
 
-  delete(id: number) {
-    return http.delete(`/lotes/${id}`)
+  remove(id: number | string) {
+    return http.delete<void>(`/lotes/${id}`)
   },
 }

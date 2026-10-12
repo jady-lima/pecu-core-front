@@ -53,6 +53,12 @@ const router = createRouter({
       meta: { roles: ['ADMIN', 'PRODUTOR'] },
     },
     {
+      path: '/propriedades/:id/veterinarios',
+      name: 'propriedades-veterinarios',
+      component: () => import('@/views/propriedades/PropriedadeVeterinariosView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
       path: '/lotes',
       name: 'lotes',
       component: () => import('@/views/lotes/LoteView.vue'),

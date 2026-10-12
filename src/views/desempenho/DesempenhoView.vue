@@ -38,7 +38,7 @@
             </div>
 
             <p class="text-2xl font-semibold text-slate-900">
-              —
+              -
             </p>
 
             <p class="mt-2 text-sm text-slate-500">
@@ -56,7 +56,7 @@
             </div>
 
             <p class="text-2xl font-semibold text-slate-900">
-              —
+              -
             </p>
 
             <p class="mt-2 text-sm text-slate-500">
@@ -74,7 +74,7 @@
             </div>
 
             <p class="text-2xl font-semibold text-slate-900">
-              —
+              -
             </p>
 
             <p class="mt-2 text-sm text-slate-500">

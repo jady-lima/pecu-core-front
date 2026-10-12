@@ -4,7 +4,7 @@
       <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
 
       <RouterLink
-        to="/"
+        :to="{ name: 'home' }"
         class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
       >
         Voltar para Home
@@ -52,14 +52,48 @@
               required
             />
           </div>
+
+          <div v-if="auth.isAdmin">
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Produtor (dono)
+            </label>
+
+            <select
+              v-model="usuarioId"
+              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500"
+              :disabled="editandoId !== null"
+              required
+            >
+              <option :value="null" disabled>
+                Selecione o produtor
+              </option>
+
+              <option
+                v-for="produtor in produtores"
+                :key="produtor.id"
+                :value="produtor.id"
+              >
+                {{ produtor.nome }} ({{ produtor.username }})
+              </option>
+            </select>
+
+            <p v-if="editandoId !== null" class="mt-1 text-xs text-slate-500">
+              O dono da propriedade não pode ser alterado.
+            </p>
+
+            <p v-else-if="!loading && produtores.length === 0" class="mt-1 text-xs text-amber-700">
+              Nenhum usuário com perfil Produtor cadastrado. Cadastre um em Usuários antes de criar a propriedade.
+            </p>
+          </div>
         </div>
 
         <div class="mt-5 flex gap-2">
           <button
             type="submit"
-            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            :disabled="salvando"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
           >
-            {{ editandoId ? 'Salvar alterações' : 'Cadastrar propriedade' }}
+            {{ salvando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar propriedade' }}
           </button>
 
           <button
@@ -98,6 +132,7 @@
             <tr>
               <th class="px-4 py-3 font-medium">Nome</th>
               <th class="px-4 py-3 font-medium">Localização</th>
+              <th v-if="auth.isAdmin" class="px-4 py-3 font-medium">Produtor</th>
               <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
@@ -112,6 +147,10 @@
                 {{ propriedade.localizacao }}
               </td>
 
+              <td v-if="auth.isAdmin" class="px-4 py-3 text-slate-700">
+                {{ nomeProdutor(propriedade.usuarioId) }}
+              </td>
+
               <td class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
@@ -122,9 +161,17 @@
                     Editar
                   </button>
 
+                  <RouterLink
+                    v-if="auth.isAdmin"
+                    :to="{ name: 'propriedades-veterinarios', params: { id: propriedade.id } }"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Veterinários
+                  </RouterLink>
+
                   <button
                     type="button"
-                    @click="excluirPropriedade(propriedade.id)"
+                    @click="excluirPropriedade(propriedade)"
                     class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
                   >
                     Excluir
@@ -144,33 +191,52 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { http } from '@/services/http'
+import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { propriedadeService } from '@/services/propriedadeService'
+import { usuarioService } from '@/services/usuarioService'
+import { getApiErrorMessage } from '@/utils/apiErrors'
+import type { NovaPropriedadePayload, Propriedade } from '@/types/propriedade'
+import type { Usuario } from '@/types/usuario'
 
-interface Propriedade {
-  id: number
-  nome: string
-  localizacao: string
-  usuarioId: number
-}
+const auth = useAuthStore()
 
 const propriedades = ref<Propriedade[]>([])
+const usuarios = ref<Usuario[]>([])
 const loading = ref(true)
+const salvando = ref(false)
 const erro = ref('')
 const sucesso = ref('')
 
 const editandoId = ref<number | null>(null)
 const nome = ref('')
 const localizacao = ref('')
+const usuarioId = ref<number | null>(null)
+
+const produtores = computed(() =>
+  usuarios.value.filter((usuario) => usuario.perfil === 'PRODUTOR'),
+)
+
+function nomeProdutor(id: number | null): string {
+  if (id === null) {
+    return '-'
+  }
+
+  return usuarios.value.find((usuario) => usuario.id === id)?.nome ?? `Usuário #${id}`
+}
 
 async function carregarPropriedades() {
-  const response = await http.get<Propriedade[]>('/propriedades')
-  propriedades.value = response
+  propriedades.value = await propriedadeService.listAll()
+}
+
+async function carregarUsuarios() {
+  usuarios.value = await usuarioService.listAll()
 }
 
 function limparFormulario() {
   nome.value = ''
   localizacao.value = ''
+  usuarioId.value = null
   editandoId.value = null
 }
 
@@ -178,21 +244,32 @@ async function salvarPropriedade() {
   erro.value = ''
   sucesso.value = ''
 
-  try {
-    const dados = {
-      nome: nome.value,
-      localizacao: localizacao.value,
-    }
+  if (auth.isAdmin && editandoId.value === null && usuarioId.value === null) {
+    erro.value = 'Selecione o produtor dono da propriedade.'
+    return
+  }
 
+  salvando.value = true
+
+  try {
     if (editandoId.value !== null) {
-      await http.put<Propriedade>(
-        `/propriedades/${editandoId.value}`,
-        dados
-      )
+      await propriedadeService.update(editandoId.value, {
+        nome: nome.value,
+        localizacao: localizacao.value,
+      })
 
       sucesso.value = 'Propriedade atualizada com sucesso.'
     } else {
-      await http.post<Propriedade>('/propriedades', dados)
+      const payload: NovaPropriedadePayload = {
+        nome: nome.value,
+        localizacao: localizacao.value,
+      }
+
+      if (auth.isAdmin && usuarioId.value !== null) {
+        payload.usuarioId = usuarioId.value
+      }
+
+      await propriedadeService.create(payload)
 
       sucesso.value = 'Propriedade cadastrada com sucesso.'
     }
@@ -201,7 +278,12 @@ async function salvarPropriedade() {
     limparFormulario()
   } catch (err) {
     console.error('Falha ao salvar propriedade', err)
-    erro.value = 'Não foi possível salvar a propriedade. Verifique os dados e tente novamente.'
+    erro.value = getApiErrorMessage(
+      err,
+      'Não foi possível salvar a propriedade. Verifique os dados e tente novamente.',
+    )
+  } finally {
+    salvando.value = false
   }
 }
 
@@ -209,6 +291,7 @@ function editarPropriedade(propriedade: Propriedade) {
   editandoId.value = propriedade.id
   nome.value = propriedade.nome
   localizacao.value = propriedade.localizacao
+  usuarioId.value = propriedade.usuarioId
   erro.value = ''
   sucesso.value = ''
 
@@ -221,8 +304,8 @@ function cancelarEdicao() {
   sucesso.value = ''
 }
 
-async function excluirPropriedade(id: number) {
-  if (!confirm('Tem certeza que deseja excluir esta propriedade?')) {
+async function excluirPropriedade(propriedade: Propriedade) {
+  if (!confirm(`Tem certeza que deseja excluir a propriedade "${propriedade.nome}"?`)) {
     return
   }
 
@@ -230,9 +313,9 @@ async function excluirPropriedade(id: number) {
   sucesso.value = ''
 
   try {
-    await http.delete<void>(`/propriedades/${id}`)
+    await propriedadeService.remove(propriedade.id)
 
-    if (editandoId.value === id) {
+    if (editandoId.value === propriedade.id) {
       limparFormulario()
     }
 
@@ -240,16 +323,22 @@ async function excluirPropriedade(id: number) {
     sucesso.value = 'Propriedade excluída com sucesso.'
   } catch (err) {
     console.error('Falha ao excluir propriedade', err)
-    erro.value = 'Não foi possível excluir a propriedade. Verifique se existem lotes ou outros registros associados.'
+    erro.value = getApiErrorMessage(
+      err,
+      'Não foi possível excluir a propriedade. Verifique se existem lotes ou outros registros associados.',
+    )
   }
 }
 
 onMounted(async () => {
   try {
-    await carregarPropriedades()
+    await Promise.all([
+      carregarPropriedades(),
+      auth.isAdmin ? carregarUsuarios() : Promise.resolve(),
+    ])
   } catch (err) {
     console.error('Falha ao carregar propriedades', err)
-    erro.value = 'Não foi possível carregar as propriedades.'
+    erro.value = getApiErrorMessage(err, 'Não foi possível carregar as propriedades.')
   } finally {
     loading.value = false
   }

@@ -95,7 +95,7 @@
                 :key="lote.id"
                 :value="lote.id"
               >
-                Lote {{ lote.numero }} — Propriedade {{ lote.propriedadeId }}
+                Lote {{ lote.numero }} - Propriedade {{ lote.propriedadeId }}
               </option>
             </select>
 
@@ -248,7 +248,7 @@ function nomeLote(id: number): string {
     return 'Lote não encontrado'
   }
 
-  return `Lote ${lote.numero} — Propriedade ${lote.propriedadeId}`
+  return `Lote ${lote.numero} - Propriedade ${lote.propriedadeId}`
 }
 
 function limparFormulario() {

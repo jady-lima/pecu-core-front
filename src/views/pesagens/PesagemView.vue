@@ -185,7 +185,7 @@
                   </span>
 
                   <span v-else>
-                    —
+                    -
                   </span>
                 </td>
               </tr>
