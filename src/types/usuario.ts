@@ -1,14 +1,17 @@
 export type Perfil = 'ADMIN' | 'PRODUTOR' | 'VETERINARIO'
 
+export const PERFIL_LABEL: Record<Perfil, string> = {
+  ADMIN: 'Administrador',
+  PRODUTOR: 'Produtor',
+  VETERINARIO: 'Veterinário',
+}
+
 export interface Usuario {
-  id: number | string
-  username?: string
-  nome?: string
-  email?: string
-  role?: string
-  perfil?: Perfil
-  dataCriacao?: string
-  [key: string]: unknown
+  id: number
+  nome: string
+  username: string
+  perfil: Perfil
+  dataCriacao: string
 }
 
 export interface NovoUsuarioPayload {

@@ -2,13 +2,15 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { authService } from '@/services/authService'
 import type { LoginCredentials } from '@/types/auth'
+import type { Perfil } from '@/types/usuario'
 
 const TOKEN_KEY = 'pecu_token'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  const perfil = ref<string | null>(null)
-  const userId = ref<number | string | null>(null)
+  const perfil = ref<Perfil | null>(null)
+  const userId = ref<number | null>(null)
+  const nome = ref<string | null>(null)
 
   const isAuthenticated = computed(() => token.value !== null)
   const isProdutor = computed(() => perfil.value === 'PRODUTOR')
@@ -23,14 +25,15 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchPerfil() {
     const usuario = await authService.me()
     perfil.value = usuario.perfil
-    const id = usuario.id
-    userId.value = typeof id === 'number' || typeof id === 'string' ? id : null
+    userId.value = usuario.id
+    nome.value = usuario.nome
   }
 
   function logout() {
     token.value = null
     perfil.value = null
     userId.value = null
+    nome.value = null
     localStorage.removeItem(TOKEN_KEY)
   }
 
@@ -38,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     perfil,
     userId,
+    nome,
     isAuthenticated,
     isProdutor,
     isAdmin,

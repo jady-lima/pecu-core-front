@@ -1,24 +1,24 @@
 import { http } from '@/services/http'
-import type { Animal } from '@/types/animal'
+import type { Animal, AnimalPayload, StatusAnimal } from '@/types/animal'
 
 export const animalService = {
   listAll() {
     return http.get<Animal[]>('/animais')
   },
 
-  getById(id: number) {
+  getById(id: number | string) {
     return http.get<Animal>(`/animais/${id}`)
   },
 
-  create(animal: Omit<Animal, 'id' | 'status'>) {
-    return http.post<Animal>('/animais', animal)
+  create(payload: AnimalPayload) {
+    return http.post<Animal>('/animais', payload)
   },
 
-  update(id: number, animal: Omit<Animal, 'id' | 'status'>) {
-    return http.put<Animal>(`/animais/${id}`, animal)
+  update(id: number | string, payload: AnimalPayload) {
+    return http.put<Animal>(`/animais/${id}`, payload)
   },
 
-  delete(id: number) {
-    return http.delete(`/animais/${id}`)
+  updateStatus(id: number | string, status: StatusAnimal) {
+    return http.put<Animal>(`/animais/${id}/status`, { status })
   },
 }
