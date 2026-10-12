@@ -17,3 +17,10 @@ export interface NovoUsuarioPayload {
   senha: string
   perfil: Perfil
 }
+
+export interface AtualizarUsuarioPayload {
+  nome: string
+  username: string
+  senha?: string
+  perfil: Perfil
+}

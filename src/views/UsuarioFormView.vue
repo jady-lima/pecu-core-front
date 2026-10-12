@@ -10,11 +10,22 @@
     </header>
 
     <main class="flex justify-center p-6">
-      <form class="w-full max-w-md rounded-lg bg-white p-8 shadow-sm ring-1 ring-slate-200"
+      <p v-if="initialLoading" class="text-slate-500">Carregando dados do usuário...</p>
+
+      <div v-else-if="initialError" class="w-full max-w-md rounded-lg bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm text-red-600">{{ initialError }}</p>
+        <RouterLink class="mt-4 inline-block text-sm font-medium text-slate-700 underline" :to="{ name: 'home' }">
+          Voltar para a listagem
+        </RouterLink>
+      </div>
+
+      <form v-else class="w-full max-w-md rounded-lg bg-white p-8 shadow-sm ring-1 ring-slate-200"
         @submit.prevent="handleSubmit"
         novalidate
       >
-        <h2 class="mb-6 text-xl font-semibold text-slate-900">Cadastro de novo usuário</h2>
+        <h2 class="mb-6 text-xl font-semibold text-slate-900">
+          {{ isEdicao ? 'Editar usuário' : 'Cadastro de novo usuário' }}
+        </h2>
 
         <div class="mb-4">
           <label for="nome" class="mb-1 block text-sm font-medium text-slate-700">Nome</label>
@@ -66,6 +77,9 @@
             </button>
           </div>
           <p v-if="fieldErrors.senha" class="mt-1 text-xs text-red-600">{{ fieldErrors.senha }}</p>
+          <p v-else-if="isEdicao" class="mt-1 text-xs text-slate-500">
+            Deixe em branco para manter a senha atual, ou preencha para definir uma nova.
+          </p>
         </div>
 
         <div class="mb-6">
@@ -91,7 +105,7 @@
           type="submit"
           :disabled="loading"
         >
-          {{ loading ? 'Salvando...' : 'Cadastrar usuário' }}
+          {{ loading ? 'Salvando...' : isEdicao ? 'Salvar alterações' : 'Cadastrar usuário' }}
         </button>
       </form>
     </main>
@@ -99,12 +113,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import { HttpError } from '@/services/http'
-import type { Perfil } from '@/types/usuario'
+import type { AtualizarUsuarioPayload, NovoUsuarioPayload, Perfil } from '@/types/usuario'
 
 const PERFIL_OPTIONS: { value: Perfil; label: string }[] = [
   { value: 'ADMIN', label: 'Administrador' },
@@ -115,7 +129,14 @@ const PERFIL_OPTIONS: { value: Perfil; label: string }[] = [
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SENHA_MIN_LENGTH = 6
 
+const route = useRoute()
 const router = useRouter()
+
+const usuarioId = computed(() => {
+  const raw = route.params.id
+  return typeof raw === 'string' && raw !== '' ? raw : null
+})
+const isEdicao = computed(() => usuarioId.value !== null)
 
 const form = reactive({
   nome: '',
@@ -133,6 +154,8 @@ const fieldErrors = reactive({
 
 const showSenha = ref(false)
 const loading = ref(false)
+const initialLoading = ref(false)
+const initialError = ref('')
 const generalError = ref('')
 const successMessage = ref('')
 
@@ -155,7 +178,7 @@ function validateUsername(): boolean {
 
 function validateSenha(): boolean {
   if (form.senha === '') {
-    fieldErrors.senha = 'Informe a senha.'
+    fieldErrors.senha = isEdicao.value ? '' : 'Informe a senha.'
   } else if (form.senha.length < SENHA_MIN_LENGTH) {
     fieldErrors.senha = `A senha deve ter ao menos ${SENHA_MIN_LENGTH} caracteres.`
   } else {
@@ -186,6 +209,39 @@ function resetForm() {
   showSenha.value = false
 }
 
+async function loadUsuario(id: string) {
+  resetForm()
+  initialError.value = ''
+  initialLoading.value = true
+  try {
+    const usuario = await usuarioService.getById(id)
+    form.nome = usuario.nome ?? ''
+    form.username = usuario.username ?? ''
+    form.perfil = usuario.perfil ?? ''
+  } catch (err) {
+    if (err instanceof HttpError && err.status === 401) {
+      router.push({ name: 'login' })
+      return
+    }
+    initialError.value = getApiErrorMessage(err, 'Não foi possível carregar os dados do usuário.')
+  } finally {
+    initialLoading.value = false
+  }
+}
+
+watch(
+  usuarioId,
+  (id) => {
+    if (id) {
+      loadUsuario(id)
+    } else {
+      resetForm()
+      initialError.value = ''
+    }
+  },
+  { immediate: true },
+)
+
 async function handleSubmit() {
   generalError.value = ''
   successMessage.value = ''
@@ -196,15 +252,30 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await usuarioService.create({
-      nome: form.nome.trim(),
-      username: form.username.trim(),
-      senha: form.senha,
-      perfil: form.perfil as Perfil,
-    })
+    const id = usuarioId.value
+    if (id) {
+      const payload: AtualizarUsuarioPayload = {
+        nome: form.nome.trim(),
+        username: form.username.trim(),
+        perfil: form.perfil as Perfil,
+      }
+      if (form.senha !== '') {
+        payload.senha = form.senha
+      }
+      await usuarioService.update(id, payload)
+      successMessage.value = 'Usuário atualizado com sucesso!'
+    } else {
+      const payload: NovoUsuarioPayload = {
+        nome: form.nome.trim(),
+        username: form.username.trim(),
+        senha: form.senha,
+        perfil: form.perfil as Perfil,
+      }
+      await usuarioService.create(payload)
+      successMessage.value = 'Usuário cadastrado com sucesso!'
+      resetForm()
+    }
 
-    successMessage.value = 'Usuário cadastrado com sucesso!'
-    resetForm()
     setTimeout(() => {
       router.push({ name: 'home' })
     }, 1200)
@@ -213,7 +284,12 @@ async function handleSubmit() {
       router.push({ name: 'login' })
       return
     }
-    generalError.value = getApiErrorMessage(err, 'Não foi possível cadastrar o usuário. Tente novamente.')
+    generalError.value = getApiErrorMessage(
+      err,
+      isEdicao.value
+        ? 'Não foi possível atualizar o usuário. Tente novamente.'
+        : 'Não foi possível cadastrar o usuário. Tente novamente.',
+    )
   } finally {
     loading.value = false
   }

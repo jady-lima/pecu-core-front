@@ -26,7 +26,13 @@ const router = createRouter({
     {
       path: '/usuarios/novo',
       name: 'usuarios-novo',
-      component: () => import('@/views/UsuarioNovoView.vue'),
+      component: () => import('@/views/UsuarioFormView.vue'),
+      meta: { roles: ['ADMIN'] },
+    },
+    {
+      path: '/usuarios/:id/editar',
+      name: 'usuarios-editar',
+      component: () => import('@/views/UsuarioFormView.vue'),
       meta: { roles: ['ADMIN'] },
     },
   ],
