@@ -108,6 +108,24 @@ const MODULOS_PRODUTOR: GrupoModulos[] = [
         descricao: 'Registre a alimentação por animal ou por lote.',
       },
       {
+        rota: 'vacinacoes',
+        icone: '💉',
+        titulo: 'Vacinação',
+        descricao: 'Registre vacinas e acompanhe próximas doses e carência.',
+      },
+      {
+        rota: 'medicamentos',
+        icone: '💊',
+        titulo: 'Medicamentos',
+        descricao: 'Registre tratamentos e acompanhe o período de carência.',
+      },
+      {
+        rota: 'custos',
+        icone: '💰',
+        titulo: 'Custos',
+        descricao: 'Acompanhe os gastos e lance custos manuais.',
+      },
+      {
         rota: 'desempenho',
         icone: '📊',
         titulo: 'Desempenho',

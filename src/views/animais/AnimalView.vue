@@ -242,16 +242,50 @@
       </p>
 
       <section>
-      <h3 class="mb-3 text-lg font-semibold text-slate-900">
-        Animais cadastrados
-      </h3>
+      <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h3 class="text-lg font-semibold text-slate-900">
+          Animais cadastrados
+          <span
+            v-if="!loading && animais.length > 0"
+            class="ml-1 text-sm font-normal text-slate-500"
+          >
+            {{ filtroAtivo ? `${animaisFiltrados.length} de ${animais.length}` : animais.length }}
+          </span>
+        </h3>
+
+        <div class="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
+          <select
+            v-model="filtroStatus"
+            aria-label="Filtrar animais por status"
+            class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-44"
+          >
+            <option value="">Todos os status</option>
+            <option
+              v-for="(label, status) in STATUS_ANIMAL_LABEL"
+              :key="status"
+              :value="status"
+            >
+              {{ label }}
+            </option>
+          </select>
+
+          <input
+            v-model="buscaBrinco"
+            type="search"
+            inputmode="numeric"
+            placeholder="Buscar por brinco"
+            aria-label="Buscar animal por brinco"
+            class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-64"
+          />
+        </div>
+      </div>
 
       <p v-if="loading" class="text-slate-500">
         Carregando...
       </p>
 
       <div
-        v-else-if="animais.length > 0"
+        v-else-if="animaisFiltrados.length > 0"
         class="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200"
       >
         <table class="w-full text-left text-sm">
@@ -270,7 +304,7 @@
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="animal in animais" :key="animal.id">
+            <tr v-for="animal in animaisFiltrados" :key="animal.id">
               <td class="px-4 py-3 font-medium text-slate-900">
                 {{ animal.brinco }}
               </td>
@@ -310,6 +344,13 @@
 
               <td class="px-4 py-3">
                 <div class="flex gap-2">
+                  <RouterLink
+                    :to="{ name: 'animais-ficha', params: { id: animal.id } }"
+                    class="rounded-md bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200"
+                  >
+                    Ficha
+                  </RouterLink>
+
                   <button
                     type="button"
                     @click="editarAnimal(animal)"
@@ -332,6 +373,10 @@
           </tbody>
         </table>
       </div>
+
+      <p v-else-if="filtroAtivo" class="text-slate-500">
+        Nenhum animal encontrado com os filtros selecionados.
+      </p>
 
       <p v-else class="text-slate-500">
         Nenhum animal encontrado.
@@ -365,6 +410,19 @@ import type { Usuario } from '@/types/usuario'
 const auth = useAuthStore()
 
 const animais = ref<Animal[]>([])
+const buscaBrinco = ref('')
+const filtroStatus = ref<StatusAnimal | ''>('')
+
+const filtroAtivo = computed(() => buscaBrinco.value.trim() !== '' || filtroStatus.value !== '')
+
+const animaisFiltrados = computed(() => {
+  const termo = buscaBrinco.value.replace(/\D/g, '')
+
+  return [...animais.value]
+    .sort((a, b) => a.brinco - b.brinco)
+    .filter((animal) => !filtroStatus.value || animal.status === filtroStatus.value)
+    .filter((animal) => !termo || String(animal.brinco).includes(termo))
+})
 const lotes = ref<Lote[]>([])
 const propriedades = ref<Propriedade[]>([])
 const usuarios = ref<Usuario[]>([])

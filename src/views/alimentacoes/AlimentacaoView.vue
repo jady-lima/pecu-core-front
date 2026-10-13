@@ -310,6 +310,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import { alimentacaoService } from '@/services/alimentacaoService'
@@ -325,6 +326,8 @@ import type { Propriedade } from '@/types/propriedade'
 import type { OpcaoSelect } from '@/types/select'
 
 type Modo = 'animal' | 'lote'
+
+const route = useRoute()
 
 const animais = ref<Animal[]>([])
 const lotes = ref<Lote[]>([])
@@ -563,6 +566,20 @@ onMounted(async () => {
     erro.value = getApiErrorMessage(err, 'Não foi possível carregar animais e lotes.')
   } finally {
     loading.value = false
+  }
+
+  const animalDaUrl = animais.value.find((animal) => animal.brinco === Number(route.query.brinco))
+
+  if (animalDaUrl) {
+    propriedadeHistorico.value = lotePorId.value.get(animalDaUrl.loteId)?.propriedadeId ?? null
+    brincoHistorico.value = animalDaUrl.brinco
+
+    if (animalDaUrl.status === 'ATIVO') {
+      modo.value = 'animal'
+      brincoRegistro.value = animalDaUrl.brinco
+    }
+
+    await carregarHistorico()
   }
 })
 </script>
