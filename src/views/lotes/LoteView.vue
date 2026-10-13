@@ -1,24 +1,11 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <h2 class="mb-4 text-xl font-semibold text-slate-900">
-        Lotes
-      </h2>
-
+  <PageLayout
+    titulo="Lotes"
+    subtitulo="Cadastros"
+  >
       <form
         @submit.prevent="salvarLote"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-4 text-lg font-semibold text-slate-900">
           {{ editandoId ? 'Editar lote' : 'Cadastrar lote' }}
@@ -156,6 +143,75 @@
         </p>
       </form>
 
+      <form
+        v-if="loteMeta"
+        @submit.prevent="salvarMeta"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+      >
+        <h3 class="mb-1 text-lg font-semibold text-slate-900">
+          Meta de GMD - Lote {{ loteMeta.numero }}
+        </h3>
+
+        <p class="mb-4 text-sm text-slate-500">
+          Padrão para {{ FINALIDADE_LOTE_LABEL[loteMeta.finalidade] }}:
+          <span class="font-medium text-slate-700">
+            {{ metaPadrao(loteMeta) === null ? 'não definido' : `${formatarNumero(metaPadrao(loteMeta)!, 3)} kg/dia` }}
+          </span>
+        </p>
+
+        <div class="max-w-sm">
+          <label class="mb-1 block text-sm font-medium text-slate-700">
+            Meta específica do lote (kg/dia)
+          </label>
+
+          <input
+            v-model.number="gmdMeta"
+            type="number"
+            min="0.001"
+            step="0.001"
+            class="w-full rounded-md border border-slate-300 px-3 py-2"
+            required
+          />
+        </div>
+
+        <p class="mt-3 text-xs text-slate-500">
+          A meta do lote substitui a meta padrão da finalidade na comparação de desempenho dos animais deste lote.
+        </p>
+
+        <div class="mt-5 flex flex-wrap gap-2">
+          <button
+            type="submit"
+            :disabled="salvandoMeta"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+          >
+            {{ salvandoMeta ? 'Salvando...' : 'Salvar meta' }}
+          </button>
+
+          <button
+            v-if="loteMeta.gmdMeta !== null"
+            type="button"
+            :disabled="salvandoMeta"
+            @click="removerMeta"
+            class="rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+          >
+            Usar meta padrão
+          </button>
+
+          <button
+            type="button"
+            @click="fecharMeta"
+            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        <p v-if="erroMeta" class="mt-3 text-sm text-red-600">
+          {{ erroMeta }}
+        </p>
+      </form>
+
+      <section>
       <h3 class="mb-3 text-lg font-semibold text-slate-900">
         Lotes cadastrados
       </h3>
@@ -171,46 +227,66 @@
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-100 text-slate-600">
             <tr>
-              <th class="px-4 py-2 font-medium">Número</th>
-              <th class="px-4 py-2 font-medium">Finalidade</th>
-              <th class="px-4 py-2 font-medium">Ocupação</th>
-              <th class="px-4 py-2 font-medium">Data de criação</th>
-              <th class="px-4 py-2 font-medium">Propriedade</th>
-              <th v-if="auth.isAdmin" class="px-4 py-2 font-medium">Produtor</th>
-              <th class="px-4 py-2 font-medium">Ações</th>
+              <th class="px-4 py-3 font-medium">Número</th>
+              <th class="px-4 py-3 font-medium">Finalidade</th>
+              <th class="px-4 py-3 font-medium">Ocupação</th>
+              <th class="px-4 py-3 font-medium">Meta GMD</th>
+              <th class="px-4 py-3 font-medium">Data de criação</th>
+              <th class="px-4 py-3 font-medium">Propriedade</th>
+              <th v-if="auth.isAdmin" class="px-4 py-3 font-medium">Produtor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
             <tr v-for="lote in lotes" :key="lote.id">
-              <td class="px-4 py-2 font-medium text-slate-900">
+              <td class="px-4 py-3 font-medium text-slate-900">
                 {{ lote.numero }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
               </td>
 
               <td
-                class="px-4 py-2"
+                class="px-4 py-3"
                 :class="(ativosPorLote.get(lote.id) ?? 0) >= lote.capacidade ? 'font-medium text-amber-700' : 'text-slate-700'"
               >
                 {{ ativosPorLote.get(lote.id) ?? 0 }}/{{ lote.capacidade }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="whitespace-nowrap px-4 py-3">
+                <template v-if="lote.gmdMeta !== null">
+                  <span class="font-medium text-slate-900">{{ formatarNumero(lote.gmdMeta, 3) }} kg/dia</span>
+                  <span class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">do lote</span>
+                </template>
+
+                <template v-else-if="metaPadrao(lote) !== null">
+                  <span class="text-slate-700">{{ formatarNumero(metaPadrao(lote)!, 3) }} kg/dia</span>
+                  <span class="ml-1 text-xs text-slate-500">(padrão)</span>
+                </template>
+
+                <span
+                  v-else
+                  class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                >
+                  Sem meta
+                </span>
+              </td>
+
+              <td class="px-4 py-3 text-slate-700">
                 {{ formatarData(lote.dataCriacao) }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ propriedadePorId.get(lote.propriedadeId)?.nome ?? `Propriedade #${lote.propriedadeId}` }}
               </td>
 
-              <td v-if="auth.isAdmin" class="px-4 py-2 text-slate-700">
+              <td v-if="auth.isAdmin" class="px-4 py-3 text-slate-700">
                 {{ nomeProdutor(propriedadePorId.get(lote.propriedadeId)?.usuarioId ?? null) }}
               </td>
 
-              <td class="px-4 py-2">
+              <td class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -218,6 +294,14 @@
                     class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
                   >
                     Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="abrirMeta(lote)"
+                    class="rounded-md bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200"
+                  >
+                    Meta
                   </button>
 
                   <button
@@ -237,20 +321,24 @@
       <p v-else class="text-slate-500">
         Nenhum lote encontrado.
       </p>
-    </main>
-  </div>
+      </section>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'
+import { metaDesempenhoService } from '@/services/metaDesempenhoService'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import { formatarData, formatarNumero } from '@/utils/formatters'
 import type { Animal } from '@/types/animal'
 import { FINALIDADE_LOTE_LABEL, type FinalidadeLote, type Lote } from '@/types/lote'
+import type { MetaDesempenho } from '@/types/metaDesempenho'
 import type { Propriedade } from '@/types/propriedade'
 import type { Usuario } from '@/types/usuario'
 
@@ -272,6 +360,87 @@ const finalidade = ref<FinalidadeLote>('CORTE')
 const capacidade = ref<number | null>(null)
 const dataCriacao = ref('')
 const propriedadeId = ref<number | null>(null)
+
+const metasPadrao = ref<MetaDesempenho[]>([])
+const loteMeta = ref<Lote | null>(null)
+const gmdMeta = ref<number | ''>('')
+const salvandoMeta = ref(false)
+const erroMeta = ref('')
+
+const metaPadraoPorFase = computed(
+  () => new Map(metasPadrao.value.map((meta) => [meta.fase, meta.gmdEsperado])),
+)
+
+function metaPadrao(lote: Lote): number | null {
+  return metaPadraoPorFase.value.get(lote.finalidade) ?? null
+}
+
+function abrirMeta(lote: Lote) {
+  loteMeta.value = lote
+  gmdMeta.value = lote.gmdMeta ?? ''
+  erroMeta.value = ''
+  sucesso.value = ''
+}
+
+function fecharMeta() {
+  loteMeta.value = null
+  gmdMeta.value = ''
+  erroMeta.value = ''
+}
+
+async function salvarMeta() {
+  if (!loteMeta.value) {
+    return
+  }
+
+  if (typeof gmdMeta.value !== 'number' || gmdMeta.value <= 0) {
+    erroMeta.value = 'Informe um GMD maior que zero.'
+    return
+  }
+
+  const lote = loteMeta.value
+  erroMeta.value = ''
+  salvandoMeta.value = true
+
+  try {
+    await loteService.definirMetaGmd(lote.id, gmdMeta.value)
+    await carregarLotes()
+    fecharMeta()
+    sucesso.value = `Meta do lote ${lote.numero} atualizada.`
+  } catch (err) {
+    console.error('Falha ao salvar meta do lote', err)
+    erroMeta.value = getApiErrorMessage(err, 'Não foi possível salvar a meta do lote.')
+  } finally {
+    salvandoMeta.value = false
+  }
+}
+
+async function removerMeta() {
+  if (!loteMeta.value) {
+    return
+  }
+
+  const lote = loteMeta.value
+
+  if (!confirm(`Remover a meta específica do lote ${lote.numero} e voltar a usar a meta padrão da finalidade?`)) {
+    return
+  }
+
+  erroMeta.value = ''
+  salvandoMeta.value = true
+
+  try {
+    await loteService.removerMetaGmd(lote.id)
+    await carregarLotes()
+    fecharMeta()
+    sucesso.value = `O lote ${lote.numero} voltou a usar a meta padrão.`
+  } catch (err) {
+    console.error('Falha ao remover meta do lote', err)
+    erroMeta.value = getApiErrorMessage(err, 'Não foi possível remover a meta do lote.')
+  } finally {
+    salvandoMeta.value = false
+  }
+}
 
 const propriedadePorId = computed(
   () => new Map(propriedades.value.map((propriedade) => [propriedade.id, propriedade])),
@@ -311,10 +480,6 @@ function descricaoPropriedade(propriedade: Propriedade): string {
   return `${propriedade.nome} (${propriedade.localizacao})`
 }
 
-function formatarData(data: string) {
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano}`
-}
 
 async function carregarLotes() {
   lotes.value = await loteService.listAll()
@@ -426,6 +591,9 @@ onMounted(async () => {
       }),
       propriedadeService.listAll().then((dados) => {
         propriedades.value = dados
+      }),
+      metaDesempenhoService.listAll().then((dados) => {
+        metasPadrao.value = dados
       }),
       auth.isAdmin
         ? usuarioService.listAll().then((dados) => {

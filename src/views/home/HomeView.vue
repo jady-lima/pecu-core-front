@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { PERFIL_LABEL } from '@/types/usuario'
@@ -102,6 +102,30 @@ const MODULOS_PRODUTOR: GrupoModulos[] = [
         descricao: 'Registre e consulte pesagens.',
       },
       {
+        rota: 'alimentacoes',
+        icone: '🌾',
+        titulo: 'Alimentação',
+        descricao: 'Registre a alimentação por animal ou por lote.',
+      },
+      {
+        rota: 'vacinacoes',
+        icone: '💉',
+        titulo: 'Vacinação',
+        descricao: 'Registre vacinas e acompanhe próximas doses e carência.',
+      },
+      {
+        rota: 'medicamentos',
+        icone: '💊',
+        titulo: 'Medicamentos',
+        descricao: 'Registre tratamentos e acompanhe o período de carência.',
+      },
+      {
+        rota: 'custos',
+        icone: '💰',
+        titulo: 'Custos',
+        descricao: 'Acompanhe os gastos e lance custos manuais.',
+      },
+      {
         rota: 'desempenho',
         icone: '📊',
         titulo: 'Desempenho',
@@ -129,6 +153,36 @@ const grupos = computed<GrupoModulos[]>(() => {
   return []
 })
 
+const chaveBoasVindas = computed(() =>
+  auth.userId !== null ? `pecu_boas_vindas_fechado_${auth.userId}` : null,
+)
+
+function boasVindasJaFechado(chave: string): boolean {
+  try {
+    return localStorage.getItem(chave) === '1'
+  } catch {
+    return false
+  }
+}
+
+const mostrarBoasVindas = ref(
+  chaveBoasVindas.value !== null && !boasVindasJaFechado(chaveBoasVindas.value),
+)
+
+function fecharBoasVindas() {
+  mostrarBoasVindas.value = false
+
+  if (chaveBoasVindas.value === null) {
+    return
+  }
+
+  try {
+    localStorage.setItem(chaveBoasVindas.value, '1')
+  } catch {
+    return
+  }
+}
+
 function sair() {
   auth.logout()
   router.push({ name: 'login' })
@@ -138,37 +192,62 @@ function sair() {
 <template>
   <div class="min-h-screen bg-slate-50">
 
-    <header
-      class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4"
-    >
-      <div>
-        <h1 class="text-lg font-semibold text-slate-900">
-          PecuCore
-        </h1>
+    <header class="border-b border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div>
+          <h1 class="text-lg font-semibold text-slate-900">
+            PecuCore
+          </h1>
 
-        <p class="text-sm text-slate-500">
-          {{ subtitulo }}
-        </p>
+          <p class="text-sm text-slate-500">
+            {{ subtitulo }}
+          </p>
+        </div>
+
+        <div class="flex gap-2">
+          <RouterLink
+            :to="{ name: 'perfil' }"
+            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Meu perfil
+          </RouterLink>
+
+          <button
+            @click="sair"
+            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Sair
+          </button>
+        </div>
       </div>
-
-      <button
-        @click="sair"
-        class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Sair
-      </button>
     </header>
 
-    <main class="mx-auto max-w-6xl p-6">
+    <main class="mx-auto max-w-6xl px-6 py-8">
 
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold text-slate-900">
-          Olá{{ auth.nome ? `, ${auth.nome}` : '' }}! 👋
-        </h2>
+      <section
+        v-if="mostrarBoasVindas"
+        role="status"
+        class="mb-8 flex items-start justify-between gap-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+      >
+        <div>
+          <h2 class="text-2xl font-semibold text-slate-900">
+            Olá{{ auth.nome ? `, ${auth.nome}` : '' }}! 👋
+          </h2>
 
-        <p class="mt-1 text-slate-500">
-          {{ boasVindas }}
-        </p>
+          <p class="mt-1 text-slate-500">
+            {{ boasVindas }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Remover mensagem de boas-vindas"
+          title="Remover"
+          @click="fecharBoasVindas"
+          class="shrink-0 rounded-md px-2 py-1 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          ×
+        </button>
       </section>
 
       <section

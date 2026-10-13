@@ -1,3 +1,5 @@
+import type { FinalidadeLote } from '@/types/lote'
+
 export type SexoAnimal = 'Macho' | 'Femea'
 
 export const SEXO_ANIMAL_LABEL: Record<SexoAnimal, string> = {
@@ -29,6 +31,23 @@ export interface Animal {
   sexo: SexoAnimal
   loteId: number
   status: StatusAnimal
+}
+
+export interface FichaAnimal {
+  id: number
+  brinco: number
+  dataNascimento: string
+  pesoAtual: number
+  sexo: SexoAnimal
+  status: StatusAnimal
+  loteId: number
+  numeroLote: number
+  finalidadeLote: FinalidadeLote
+  capacidadeLote: number
+  dataCriacaoLote: string
+  propriedadeId: number
+  nomePropriedade: string
+  localizacaoPropriedade: string
 }
 
 export interface AnimalPayload {

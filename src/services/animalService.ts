@@ -1,5 +1,5 @@
 import { http } from '@/services/http'
-import type { Animal, AnimalPayload, StatusAnimal } from '@/types/animal'
+import type { Animal, AnimalPayload, FichaAnimal, StatusAnimal } from '@/types/animal'
 
 export const animalService = {
   listAll() {
@@ -8,6 +8,10 @@ export const animalService = {
 
   getById(id: number | string) {
     return http.get<Animal>(`/animais/${id}`)
+  },
+
+  getFicha(id: number | string) {
+    return http.get<FichaAnimal>(`/animais/${id}/ficha`)
   },
 
   create(payload: AnimalPayload) {

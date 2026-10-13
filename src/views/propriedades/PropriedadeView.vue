@@ -1,24 +1,11 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <h2 class="mb-4 text-xl font-semibold text-slate-900">
-        Propriedades
-      </h2>
-
+  <PageLayout
+    titulo="Propriedades"
+    subtitulo="Cadastros"
+  >
       <form
         @submit.prevent="salvarPropriedade"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-4 text-lg font-semibold text-slate-900">
           {{ editandoId ? 'Editar propriedade' : 'Cadastrar propriedade' }}
@@ -115,6 +102,7 @@
         </p>
       </form>
 
+      <section>
       <h3 class="mb-3 text-lg font-semibold text-slate-900">
         Propriedades cadastradas
       </h3>
@@ -186,12 +174,13 @@
       <p v-else class="text-slate-500">
         Nenhuma propriedade encontrada.
       </p>
-    </main>
-  </div>
+      </section>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'

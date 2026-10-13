@@ -24,6 +24,11 @@ const router = createRouter({
       name: 'home',
       component: () => import('@/views/home/HomeView.vue'),
     },
+    {
+      path: '/perfil',
+      name: 'perfil',
+      component: () => import('@/views/perfil/PerfilView.vue'),
+    },
 
     // Usuários
     {
@@ -70,6 +75,12 @@ const router = createRouter({
       component: () => import('@/views/animais/AnimalView.vue'),
       meta: { roles: ['ADMIN', 'PRODUTOR'] },
     },
+    {
+      path: '/animais/:id/ficha',
+      name: 'animais-ficha',
+      component: () => import('@/views/animais/FichaAnimalView.vue'),
+      meta: { roles: ['ADMIN', 'PRODUTOR'] },
+    },
 
     // Catálogos
     {
@@ -90,6 +101,30 @@ const router = createRouter({
       path: '/pesagens',
       name: 'pesagens',
       component: () => import('@/views/pesagens/PesagemView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/alimentacoes',
+      name: 'alimentacoes',
+      component: () => import('@/views/alimentacoes/AlimentacaoView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/vacinacoes',
+      name: 'vacinacoes',
+      component: () => import('@/views/vacinacoes/VacinacaoView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/medicamentos',
+      name: 'medicamentos',
+      component: () => import('@/views/medicamentos/MedicamentoView.vue'),
+      meta: { roles: ['PRODUTOR'] },
+    },
+    {
+      path: '/custos',
+      name: 'custos',
+      component: () => import('@/views/custos/CustoView.vue'),
       meta: { roles: ['PRODUTOR'] },
     },
     {

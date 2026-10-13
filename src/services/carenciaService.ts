@@ -1,23 +1,12 @@
-import { http } from '@/services/http'
-
-interface RegistroComCarencia {
-  dataFimCarencia: string | null
-}
-
-function dataHojeIso() {
-  const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0')
-  const dia = String(hoje.getDate()).padStart(2, '0')
-
-  return `${ano}-${mes}-${dia}`
-}
+import { medicamentoService } from '@/services/medicamentoService'
+import { vacinacaoService } from '@/services/vacinacaoService'
+import { dataHojeIso } from '@/utils/formatters'
 
 export const carenciaService = {
   async fimCarencia(brinco: number): Promise<string | null> {
     const [vacinacoes, medicamentos] = await Promise.all([
-      http.get<RegistroComCarencia[]>(`/vacinacoes/animal/${brinco}`),
-      http.get<RegistroComCarencia[]>(`/medicamentos/animal/${brinco}`),
+      vacinacaoService.listByBrinco(brinco),
+      medicamentoService.listByBrinco(brinco),
     ])
 
     const hoje = dataHojeIso()

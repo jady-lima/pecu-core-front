@@ -1,58 +1,27 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-
-    <header
-      class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4"
-    >
-      <div>
-        <h1 class="text-lg font-semibold text-slate-900">
-          PecuCore
-        </h1>
-
-        <p class="text-sm text-slate-500">
-          Gerenciamento de usuários
-        </p>
-      </div>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar
-      </RouterLink>
-    </header>
-
-    <main class="mx-auto max-w-7xl p-6">
-
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-semibold text-slate-900">
-            Usuários
-          </h2>
-
-          <p class="mt-1 text-sm text-slate-500">
-            Cadastre, edite e exclua usuários do sistema.
-          </p>
-        </div>
-
+  <PageLayout
+    titulo="Usuários"
+    subtitulo="Gerenciamento de usuários"
+  >
+      <template #acoes>
         <RouterLink
           :to="{ name: 'usuarios-novo' }"
-          class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+          class="inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
         >
           + Novo usuário
         </RouterLink>
-      </div>
+      </template>
 
       <p
         v-if="erro"
-        class="mb-4 text-sm text-red-600"
+        class="text-sm text-red-600"
       >
         {{ erro }}
       </p>
 
       <p
         v-if="sucesso"
-        class="mb-4 text-sm text-green-700"
+        class="text-sm text-green-700"
       >
         {{ sucesso }}
       </p>
@@ -175,17 +144,16 @@
       >
         Nenhum usuário encontrado.
       </p>
-
-    </main>
-
-  </div>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import { formatarDataHora } from '@/utils/formatters'
 import { PERFIL_LABEL, type Usuario } from '@/types/usuario'
 
 const auth = useAuthStore()
@@ -199,18 +167,6 @@ async function carregarUsuarios() {
   usuarios.value = await usuarioService.listAll()
 }
 
-function formatarDataHora(valor: string) {
-  const data = new Date(valor)
-
-  if (Number.isNaN(data.getTime())) {
-    return valor
-  }
-
-  return data.toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
-}
 
 async function excluirUsuario(usuario: Usuario) {
   if (usuario.id === auth.userId) {

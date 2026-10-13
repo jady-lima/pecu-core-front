@@ -1,30 +1,11 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        Voltar para Home
-      </RouterLink>
-    </header>
-
-    <main class="p-6">
-      <div class="mb-4">
-        <h2 class="text-xl font-semibold text-slate-900">
-          Catálogo de vacinas
-        </h2>
-
-        <p class="mt-1 text-sm text-slate-500">
-          Vacinas disponíveis para registro de vacinação em todas as propriedades.
-        </p>
-      </div>
-
+  <PageLayout
+    titulo="Catálogo de vacinas"
+    subtitulo="Catálogos"
+  >
       <form
         @submit.prevent="salvarVacina"
-        class="mb-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
         <h3 class="mb-4 text-lg font-semibold text-slate-900">
           {{ editandoId ? 'Editar vacina' : 'Cadastrar vacina' }}
@@ -134,6 +115,7 @@
         </p>
       </form>
 
+      <section>
       <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h3 class="text-lg font-semibold text-slate-900">
           Vacinas cadastradas
@@ -158,33 +140,33 @@
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-100 text-slate-600">
             <tr>
-              <th class="px-4 py-2 font-medium">Nome</th>
-              <th class="px-4 py-2 font-medium">Fabricante</th>
-              <th class="px-4 py-2 font-medium">Carência</th>
-              <th class="px-4 py-2 font-medium">Intervalo entre doses</th>
-              <th class="px-4 py-2 font-medium">Ações</th>
+              <th class="px-4 py-3 font-medium">Nome</th>
+              <th class="px-4 py-3 font-medium">Fabricante</th>
+              <th class="px-4 py-3 font-medium">Carência</th>
+              <th class="px-4 py-3 font-medium">Intervalo entre doses</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
             <tr v-for="vacina in vacinasFiltradas" :key="vacina.id">
-              <td class="px-4 py-2 font-medium text-slate-900">
+              <td class="px-4 py-3 font-medium text-slate-900">
                 {{ vacina.nome }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ vacina.fabricante }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ vacina.carenciaDias === 0 ? 'Sem carência' : `${vacina.carenciaDias} dia(s)` }}
               </td>
 
-              <td class="px-4 py-2 text-slate-700">
+              <td class="px-4 py-3 text-slate-700">
                 {{ vacina.intervaloDoseDias ? `${vacina.intervaloDoseDias} dia(s)` : 'Dose única' }}
               </td>
 
-              <td class="px-4 py-2">
+              <td class="px-4 py-3">
                 <button
                   type="button"
                   @click="editarVacina(vacina)"
@@ -205,12 +187,13 @@
       <p v-else class="text-slate-500">
         Nenhuma vacina cadastrada.
       </p>
-    </main>
-  </div>
+      </section>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { vacinaService } from '@/services/vacinaService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import type { Vacina } from '@/types/vacina'

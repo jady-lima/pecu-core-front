@@ -10,3 +10,8 @@ export interface LoginResponse {
 }
 
 export type UsuarioLogado = Usuario
+
+export interface AlterarSenhaPayload {
+  senhaAtual: string
+  novaSenha: string
+}

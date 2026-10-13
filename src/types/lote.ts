@@ -22,6 +22,7 @@ export interface Lote {
   capacidade: number
   dataCriacao: string
   propriedadeId: number
+  gmdMeta: number | null
 }
 
 export interface LotePayload {

@@ -1,15 +1,6 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <h1 class="text-lg font-semibold text-slate-900">PecuCore</h1>
-      <RouterLink class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
-        :to="{ name: 'usuarios' }"
-      >
-        Voltar
-      </RouterLink>
-    </header>
-
-    <main class="flex justify-center p-6">
+  <PageLayout subtitulo="Gerenciamento de usuários" :voltar-para="{ name: 'usuarios' }">
+    <div class="flex justify-center">
       <p v-if="initialLoading" class="text-slate-500">Carregando dados do usuário...</p>
 
       <div v-else-if="initialError" class="w-full max-w-md rounded-lg bg-white p-8 shadow-sm ring-1 ring-slate-200">
@@ -112,12 +103,13 @@
           {{ loading ? 'Salvando...' : isEdicao ? 'Salvar alterações' : 'Cadastrar usuário' }}
         </button>
       </form>
-    </main>
-  </div>
+    </div>
+  </PageLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import PageLayout from '@/components/PageLayout.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usuarioService } from '@/services/usuarioService'
 import { useAuthStore } from '@/stores/auth'
