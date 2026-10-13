@@ -16,6 +16,20 @@
     </p>
 
     <template v-else-if="ficha">
+      <nav class="flex gap-1 border-b border-slate-200">
+        <button
+          v-for="aba in ABAS_PRINCIPAIS"
+          :key="aba.chave"
+          type="button"
+          @click="abrirAbaPrincipal(aba.chave)"
+          class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+          :class="abaPrincipal === aba.chave ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'"
+        >
+          {{ aba.titulo }}
+        </button>
+      </nav>
+
+      <div v-show="abaPrincipal === 'informacoes'" class="space-y-6">
       <section class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div class="flex items-center gap-3">
@@ -270,6 +284,13 @@
           </div>
         </div>
       </section>
+      </div>
+
+      <AnaliseIASection
+        v-if="analiseCarregada"
+        v-show="abaPrincipal === 'analise'"
+        :animal-id="ficha.id"
+      />
     </template>
   </PageLayout>
 </template>
@@ -278,6 +299,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
+import AnaliseIASection from '@/views/animais/AnaliseIASection.vue'
 import { useAuthStore } from '@/stores/auth'
 import { alimentacaoService } from '@/services/alimentacaoService'
 import { animalService } from '@/services/animalService'
@@ -302,6 +324,13 @@ import type { Vacinacao } from '@/types/vacinacao'
 
 type Aba = 'pesagens' | 'alimentacoes' | 'vacinacoes' | 'medicamentos' | 'custos'
 
+type AbaPrincipal = 'informacoes' | 'analise'
+
+const ABAS_PRINCIPAIS: { chave: AbaPrincipal; titulo: string }[] = [
+  { chave: 'informacoes', titulo: 'Informações do animal' },
+  { chave: 'analise', titulo: 'Análise com IA' },
+]
+
 const ACOES = [
   { rota: 'pesagens', texto: 'Registrar pesagem' },
   { rota: 'alimentacoes', texto: 'Registrar alimentação' },
@@ -323,6 +352,16 @@ const loading = ref(true)
 const erroInicial = ref('')
 const erroHistoricos = ref('')
 const abaAtiva = ref<Aba>('pesagens')
+const abaPrincipal = ref<AbaPrincipal>('informacoes')
+const analiseCarregada = ref(false)
+
+function abrirAbaPrincipal(aba: AbaPrincipal) {
+  abaPrincipal.value = aba
+
+  if (aba === 'analise') {
+    analiseCarregada.value = true
+  }
+}
 
 const dataHoje = dataHojeIso()
 
