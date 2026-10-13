@@ -55,7 +55,7 @@ const router = createRouter({
       path: '/propriedades',
       name: 'propriedades',
       component: () => import('@/views/propriedades/PropriedadeView.vue'),
-      meta: { roles: ['ADMIN', 'PRODUTOR'] },
+      meta: { roles: ['ADMIN', 'PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/propriedades/:id/veterinarios',
@@ -67,19 +67,19 @@ const router = createRouter({
       path: '/lotes',
       name: 'lotes',
       component: () => import('@/views/lotes/LoteView.vue'),
-      meta: { roles: ['ADMIN', 'PRODUTOR'] },
+      meta: { roles: ['ADMIN', 'PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/animais',
       name: 'animais',
       component: () => import('@/views/animais/AnimalView.vue'),
-      meta: { roles: ['ADMIN', 'PRODUTOR'] },
+      meta: { roles: ['ADMIN', 'PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/animais/:id/ficha',
       name: 'animais-ficha',
       component: () => import('@/views/animais/FichaAnimalView.vue'),
-      meta: { roles: ['ADMIN', 'PRODUTOR'] },
+      meta: { roles: ['ADMIN', 'PRODUTOR', 'VETERINARIO'] },
     },
 
     // Catálogos
@@ -101,25 +101,25 @@ const router = createRouter({
       path: '/pesagens',
       name: 'pesagens',
       component: () => import('@/views/pesagens/PesagemView.vue'),
-      meta: { roles: ['PRODUTOR'] },
+      meta: { roles: ['PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/alimentacoes',
       name: 'alimentacoes',
       component: () => import('@/views/alimentacoes/AlimentacaoView.vue'),
-      meta: { roles: ['PRODUTOR'] },
+      meta: { roles: ['PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/vacinacoes',
       name: 'vacinacoes',
       component: () => import('@/views/vacinacoes/VacinacaoView.vue'),
-      meta: { roles: ['PRODUTOR'] },
+      meta: { roles: ['PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/medicamentos',
       name: 'medicamentos',
       component: () => import('@/views/medicamentos/MedicamentoView.vue'),
-      meta: { roles: ['PRODUTOR'] },
+      meta: { roles: ['PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/custos',

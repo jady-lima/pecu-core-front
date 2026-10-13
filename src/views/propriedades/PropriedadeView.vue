@@ -3,7 +3,16 @@
     titulo="Propriedades"
     subtitulo="Cadastros"
   >
+      <div
+        v-if="!podeEditar"
+        class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-600"
+      >
+        Propriedades em que você está vinculado como veterinário. Somente consulta.
+        <p v-if="erro" class="mt-2 text-red-600">{{ erro }}</p>
+      </div>
+
       <form
+        v-if="podeEditar"
         @submit.prevent="salvarPropriedade"
         class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
       >
@@ -121,7 +130,7 @@
               <th class="px-4 py-3 font-medium">Nome</th>
               <th class="px-4 py-3 font-medium">Localização</th>
               <th v-if="auth.isAdmin" class="px-4 py-3 font-medium">Produtor</th>
-              <th class="px-4 py-3 font-medium">Ações</th>
+              <th v-if="podeEditar" class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
@@ -139,7 +148,7 @@
                 {{ nomeProdutor(propriedade.usuarioId) }}
               </td>
 
-              <td class="px-4 py-3">
+              <td v-if="podeEditar" class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -189,6 +198,8 @@ import type { NovaPropriedadePayload, Propriedade } from '@/types/propriedade'
 import type { Usuario } from '@/types/usuario'
 
 const auth = useAuthStore()
+
+const podeEditar = computed(() => auth.isAdmin || auth.isProdutor)
 
 const propriedades = ref<Propriedade[]>([])
 const usuarios = ref<Usuario[]>([])

@@ -145,7 +145,7 @@
           />
 
           <p class="mt-1 text-xs text-slate-500">
-            Se informado, é lançado automaticamente nos custos.
+            Se informado, é lançado automaticamente nos custos{{ auth.isVeterinario ? ' do produtor' : '' }}.
           </p>
         </div>
       </div>
@@ -289,6 +289,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
+import { useAuthStore } from '@/stores/auth'
 import { alimentacaoService } from '@/services/alimentacaoService'
 import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'
@@ -303,6 +304,7 @@ import type { OpcaoSelect } from '@/types/select'
 
 type Modo = 'animal' | 'lote'
 
+const auth = useAuthStore()
 const route = useRoute()
 
 const animais = ref<Animal[]>([])
