@@ -4,154 +4,140 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { PERFIL_LABEL } from '@/types/usuario'
 
+type Secao = 'Administração' | 'Gestão' | 'Manejo' | 'Financeiro' | 'Catálogos'
+
 interface ModuloCard {
   rota: string
+  secao: Secao
   icone: string
   titulo: string
   descricao: string
 }
 
 interface GrupoModulos {
-  titulo: string
+  titulo: Secao
   modulos: ModuloCard[]
 }
+
+const ORDEM_SECOES: Secao[] = ['Administração', 'Gestão', 'Manejo', 'Financeiro', 'Catálogos']
+
+const MODULOS: ModuloCard[] = [
+  { 
+    rota: 'usuarios', 
+    secao: 'Administração', 
+    icone: '👤', 
+    titulo: 'Usuários', 
+    descricao: 'Cadastre, consulte, edite e exclua os usuários do sistema.' 
+  },
+  { 
+    rota: 'propriedades', 
+    secao: 'Gestão', 
+    icone: '🏠', 
+    titulo: 'Propriedades', 
+    descricao: 'Consulte e gerencie as propriedades.' 
+  },
+  { 
+    rota: 'lotes', 
+    secao: 'Gestão', 
+    icone: '📋', 
+    titulo: 'Lotes', 
+    descricao: 'Consulte os lotes, a ocupação e a meta de GMD de cada um.' 
+  },
+  { 
+    rota: 'animais', 
+    secao: 'Gestão', 
+    icone: '🐄', 
+    titulo: 'Animais', 
+    descricao: 'Consulte os animais e abra a ficha de cada um.' 
+  },
+  { 
+    rota: 'pesagens', 
+    secao: 'Manejo', 
+    icone: '⚖️', 
+    titulo: 'Pesagens', 
+    descricao: 'Registre e consulte pesagens.' 
+  },
+  { 
+    rota: 'alimentacoes', 
+    secao: 'Manejo', 
+    icone: '🌾', 
+    titulo: 'Alimentação', 
+    descricao: 'Registre a alimentação por animal ou por lote.' 
+  },
+  { 
+    rota: 'vacinacoes', 
+    secao: 'Manejo', 
+    icone: '💉', 
+    titulo: 'Vacinação', 
+    descricao: 'Registre vacinas e acompanhe próximas doses e carência.' 
+  },
+  { 
+    rota: 'medicamentos', 
+    secao: 'Manejo', 
+    icone: '💊', 
+    titulo: 'Medicamentos', 
+    descricao: 'Registre tratamentos e acompanhe o período de carência.' 
+  },
+  { 
+    rota: 'desempenho', 
+    secao: 'Manejo', 
+    icone: '📊', 
+    titulo: 'Desempenho', 
+    descricao: 'Acompanhe a evolução e o desempenho zootécnico.' 
+  },
+  { 
+    rota: 'custos', 
+    secao: 'Financeiro', 
+    icone: '💰', 
+    titulo: 'Custos', 
+    descricao: 'Acompanhe os gastos e lance custos manuais.' 
+  },
+  { 
+    rota: 'vacinas', 
+    secao: 'Catálogos', 
+    icone: '💉', 
+    titulo: 'Vacinas', 
+    descricao: 'Cadastre as vacinas usadas nos registros de vacinação.' 
+  },
+  { 
+    rota: 'metas-desempenho', 
+    secao: 'Catálogos', 
+    icone: '🎯', 
+    titulo: 'Metas de desempenho', 
+    descricao: 'Defina o GMD esperado para cada finalidade de lote.' 
+  },
+]
 
 const auth = useAuthStore()
 const router = useRouter()
 
-const MODULOS_ADMIN: GrupoModulos[] = [
-  {
-    titulo: 'Administração',
-    modulos: [
-      {
-        rota: 'usuarios',
-        icone: '👤',
-        titulo: 'Usuários',
-        descricao: 'Cadastre, consulte, edite e exclua os usuários do sistema.',
-      },
-    ],
-  },
-  {
-    titulo: 'Cadastros',
-    modulos: [
-      {
-        rota: 'propriedades',
-        icone: '🏠',
-        titulo: 'Propriedades',
-        descricao: 'Consulte e gerencie as propriedades de todos os produtores.',
-      },
-      {
-        rota: 'lotes',
-        icone: '📋',
-        titulo: 'Lotes',
-        descricao: 'Consulte e gerencie os lotes de todas as propriedades.',
-      },
-      {
-        rota: 'animais',
-        icone: '🐄',
-        titulo: 'Animais',
-        descricao: 'Consulte e gerencie os animais de todo o rebanho.',
-      },
-    ],
-  },
-  {
-    titulo: 'Catálogos',
-    modulos: [
-      {
-        rota: 'vacinas',
-        icone: '💉',
-        titulo: 'Vacinas',
-        descricao: 'Cadastre as vacinas usadas nos registros de vacinação.',
-      },
-      {
-        rota: 'metas-desempenho',
-        icone: '🎯',
-        titulo: 'Metas de desempenho',
-        descricao: 'Defina o GMD esperado para cada finalidade de lote.',
-      },
-    ],
-  },
-]
-
-const MODULOS_PRODUTOR: GrupoModulos[] = [
-  {
-    titulo: 'Gestão',
-    modulos: [
-      {
-        rota: 'propriedades',
-        icone: '🏠',
-        titulo: 'Propriedades',
-        descricao: 'Cadastre e gerencie suas propriedades.',
-      },
-      {
-        rota: 'lotes',
-        icone: '📋',
-        titulo: 'Lotes',
-        descricao: 'Organize os lotes das suas propriedades.',
-      },
-      {
-        rota: 'animais',
-        icone: '🐄',
-        titulo: 'Animais',
-        descricao: 'Cadastre e acompanhe seus animais.',
-      },
-      {
-        rota: 'pesagens',
-        icone: '⚖️',
-        titulo: 'Pesagens',
-        descricao: 'Registre e consulte pesagens.',
-      },
-      {
-        rota: 'alimentacoes',
-        icone: '🌾',
-        titulo: 'Alimentação',
-        descricao: 'Registre a alimentação por animal ou por lote.',
-      },
-      {
-        rota: 'vacinacoes',
-        icone: '💉',
-        titulo: 'Vacinação',
-        descricao: 'Registre vacinas e acompanhe próximas doses e carência.',
-      },
-      {
-        rota: 'medicamentos',
-        icone: '💊',
-        titulo: 'Medicamentos',
-        descricao: 'Registre tratamentos e acompanhe o período de carência.',
-      },
-      {
-        rota: 'custos',
-        icone: '💰',
-        titulo: 'Custos',
-        descricao: 'Acompanhe os gastos e lance custos manuais.',
-      },
-      {
-        rota: 'desempenho',
-        icone: '📊',
-        titulo: 'Desempenho',
-        descricao: 'Acompanhe a evolução e o desempenho zootécnico.',
-      },
-    ],
-  },
-]
+function perfilPodeAcessar(rota: string): boolean {
+  const roles = router.resolve({ name: rota }).meta.roles
+  return !roles || (auth.perfil !== null && roles.includes(auth.perfil))
+}
 
 const subtitulo = computed(() => {
   if (auth.isAdmin) return 'Painel administrativo'
   if (auth.isProdutor) return 'Área do produtor'
+  if (auth.isVeterinario) return 'Área do veterinário'
   return auth.perfil ? `Área do ${PERFIL_LABEL[auth.perfil].toLowerCase()}` : ''
 })
 
 const boasVindas = computed(() => {
   if (auth.isAdmin) return 'Bem-vindo ao painel administrativo do PecuCore.'
   if (auth.isProdutor) return 'Gerencie suas propriedades e acompanhe seus animais.'
+  if (auth.isVeterinario) return 'Acompanhe e registre o manejo sanitário dos animais das propriedades em que você atende.'
   return 'Bem-vindo ao PecuCore.'
 })
 
-const grupos = computed<GrupoModulos[]>(() => {
-  if (auth.isAdmin) return MODULOS_ADMIN
-  if (auth.isProdutor) return MODULOS_PRODUTOR
-  return []
-})
+const grupos = computed<GrupoModulos[]>(() =>
+  ORDEM_SECOES
+    .map((secao) => ({
+      titulo: secao,
+      modulos: MODULOS.filter((modulo) => modulo.secao === secao && perfilPodeAcessar(modulo.rota)),
+    }))
+    .filter((grupo) => grupo.modulos.length > 0),
+)
 
 const chaveBoasVindas = computed(() =>
   auth.userId !== null ? `pecu_boas_vindas_fechado_${auth.userId}` : null,

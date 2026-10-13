@@ -47,7 +47,7 @@
           </div>
 
           <div
-            v-if="auth.isProdutor && ficha.status === 'ATIVO'"
+            v-if="(auth.isProdutor || auth.isVeterinario) && ficha.status === 'ATIVO'"
             class="flex flex-wrap gap-2"
           >
             <RouterLink

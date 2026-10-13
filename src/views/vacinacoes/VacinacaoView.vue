@@ -156,7 +156,7 @@
           />
 
           <p class="mt-1 text-xs text-slate-500">
-            Se informado, é lançado automaticamente nos custos.
+            Se informado, é lançado automaticamente nos custos{{ auth.isVeterinario ? ' do produtor' : '' }}.
           </p>
         </div>
 
@@ -424,10 +424,12 @@ const opcoesVacina = computed<OpcaoSelect[]>(() =>
 
 const aplicadores = computed<OpcaoSelect[]>(() => [
   ...(auth.userId !== null ? [{ value: auth.userId, label: `${auth.nome ?? 'Eu'} (eu)` }] : []),
-  ...veterinarios.value.map((veterinario) => ({
-    value: veterinario.id,
-    label: `${veterinario.nome} (veterinário)`,
-  })),
+  ...veterinarios.value
+    .filter((veterinario) => veterinario.id !== auth.userId)
+    .map((veterinario) => ({
+      value: veterinario.id,
+      label: `${veterinario.nome} (veterinário)`,
+    })),
 ])
 
 const historico = computed(() => [...vacinacoes.value].reverse())

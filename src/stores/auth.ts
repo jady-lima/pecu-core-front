@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => token.value !== null)
   const isProdutor = computed(() => perfil.value === 'PRODUTOR')
   const isAdmin = computed(() => perfil.value === 'ADMIN')
+  const isVeterinario = computed(() => perfil.value === 'VETERINARIO')
 
   async function login(credentials: LoginCredentials) {
     const data = await authService.login(credentials)
@@ -45,6 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isProdutor,
     isAdmin,
+    isVeterinario,
     login,
     fetchPerfil,
     logout,
