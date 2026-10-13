@@ -204,12 +204,21 @@ function sair() {
           </p>
         </div>
 
-        <button
-          @click="sair"
-          class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-        >
-          Sair
-        </button>
+        <div class="flex gap-2">
+          <RouterLink
+            :to="{ name: 'perfil' }"
+            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Meu perfil
+          </RouterLink>
+
+          <button
+            @click="sair"
+            class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     </header>
 

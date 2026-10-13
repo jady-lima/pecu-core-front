@@ -44,7 +44,7 @@
 
               <td class="px-4 py-3 text-slate-700">
                 <span v-if="metaPorFase.get(fase)">
-                  {{ formatarGmd(metaPorFase.get(fase)!.gmdEsperado) }} kg/dia
+                  {{ formatarNumero(metaPorFase.get(fase)!.gmdEsperado, 3) }} kg/dia
                 </span>
 
                 <form
@@ -99,6 +99,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { metaDesempenhoService } from '@/services/metaDesempenhoService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import { formatarNumero } from '@/utils/formatters'
 import { FINALIDADE_LOTE_LABEL, type FinalidadeLote } from '@/types/lote'
 import type { MetaDesempenho } from '@/types/metaDesempenho'
 
@@ -114,10 +115,6 @@ const sucesso = ref('')
 const metaPorFase = computed(() => new Map(metas.value.map((meta) => [meta.fase, meta])))
 
 const fasesSemMeta = computed(() => FASES.filter((fase) => !metaPorFase.value.has(fase)).length)
-
-function formatarGmd(valor: number) {
-  return valor.toLocaleString('pt-BR', { maximumFractionDigits: 3 })
-}
 
 async function carregarMetas() {
   metas.value = await metaDesempenhoService.listAll()

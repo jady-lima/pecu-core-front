@@ -4,34 +4,39 @@
     subtitulo="Manejo"
   >
     <section class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <label class="mb-1 block text-sm font-medium text-slate-700">
-        Animal
-      </label>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label for="pesagem-propriedade" class="mb-1 block text-sm font-medium text-slate-700">
+            Propriedade
+          </label>
 
-      <select
-        v-model="brinco"
-        class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 md:max-w-md"
-        :disabled="loading || animais.length === 0"
-        @change="selecionarAnimal"
-      >
-        <option :value="null" disabled>
-          {{ loading ? 'Carregando animais...' : 'Selecione um animal' }}
-        </option>
+          <SearchableSelect
+            id="pesagem-propriedade"
+            v-model="propriedadeId"
+            :options="opcoesPropriedade"
+            :disabled="loading || propriedades.length === 0"
+            placeholder="Digite o nome da propriedade"
+            texto-vazio="Nenhuma propriedade encontrada."
+            @change="trocarPropriedade"
+          />
+        </div>
 
-        <optgroup
-          v-for="grupo in animaisPorPropriedade"
-          :key="grupo.titulo"
-          :label="grupo.titulo"
-        >
-          <option
-            v-for="animal in grupo.animais"
-            :key="animal.id"
-            :value="animal.brinco"
-          >
-            Brinco {{ animal.brinco }} - {{ nomeLote(animal.loteId) }}{{ animal.status !== 'ATIVO' ? ` (${STATUS_ANIMAL_LABEL[animal.status]})` : '' }}
-          </option>
-        </optgroup>
-      </select>
+        <div>
+          <label for="pesagem-animal" class="mb-1 block text-sm font-medium text-slate-700">
+            Animal
+          </label>
+
+          <SearchableSelect
+            id="pesagem-animal"
+            v-model="brinco"
+            :options="opcoesAnimal"
+            :disabled="propriedadeId === null"
+            :placeholder="propriedadeId === null ? 'Escolha a propriedade primeiro' : 'Digite o brinco'"
+            texto-vazio="Nenhum animal encontrado nesta propriedade."
+            @change="selecionarAnimal"
+          />
+        </div>
+      </div>
 
       <p
         v-if="!loading && animais.length === 0"
@@ -219,6 +224,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'
 import { pesagemService } from '@/services/pesagemService'
@@ -229,6 +235,7 @@ import { STATUS_ANIMAL_CLASSE, STATUS_ANIMAL_LABEL, type Animal } from '@/types/
 import type { Lote } from '@/types/lote'
 import type { Pesagem } from '@/types/pesagem'
 import type { Propriedade } from '@/types/propriedade'
+import type { OpcaoSelect } from '@/types/select'
 
 const route = useRoute()
 const router = useRouter()
@@ -246,6 +253,7 @@ const erro = ref('')
 const sucesso = ref('')
 const aviso = ref('')
 
+const propriedadeId = ref<number | null>(null)
 const brinco = ref<number | null>(null)
 const pesoAtual = ref<number | null>(null)
 const dataPesagem = ref(dataHojeIso())
@@ -276,18 +284,26 @@ const historico = computed(() =>
     .reverse(),
 )
 
-const animaisPorPropriedade = computed(() => {
-  const grupos = new Map<string, Animal[]>()
+const opcoesPropriedade = computed<OpcaoSelect[]>(() =>
+  [...propriedades.value]
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+    .map((propriedade) => ({
+      value: propriedade.id,
+      label: propriedade.nome,
+      detalhe: propriedade.localizacao,
+    })),
+)
 
-  for (const animal of [...animais.value].sort((a, b) => a.brinco - b.brinco)) {
-    const titulo = propriedadeDoLote(animal.loteId)?.nome ?? 'Sem propriedade'
-    grupos.set(titulo, [...(grupos.get(titulo) ?? []), animal])
-  }
-
-  return [...grupos.entries()]
-    .map(([titulo, lista]) => ({ titulo, animais: lista }))
-    .sort((a, b) => a.titulo.localeCompare(b.titulo))
-})
+const opcoesAnimal = computed<OpcaoSelect[]>(() =>
+  animais.value
+    .filter((animal) => lotePorId.value.get(animal.loteId)?.propriedadeId === propriedadeId.value)
+    .sort((a, b) => a.brinco - b.brinco)
+    .map((animal) => ({
+      value: animal.brinco,
+      label: `Brinco ${animal.brinco}`,
+      detalhe: `${nomeLote(animal.loteId)}${animal.status !== 'ATIVO' ? ` - ${STATUS_ANIMAL_LABEL[animal.status]}` : ''}`,
+    })),
+)
 
 function nomeLote(id: number): string {
   const lote = lotePorId.value.get(id)
@@ -327,6 +343,13 @@ async function carregarHistorico() {
   } finally {
     carregandoHistorico.value = false
   }
+}
+
+function trocarPropriedade() {
+  brinco.value = null
+  pesagens.value = []
+  limparMensagens()
+  router.replace({ query: {} })
 }
 
 async function selecionarAnimal() {
@@ -389,11 +412,14 @@ onMounted(async () => {
     loading.value = false
   }
 
-  const brincoDaUrl = Number(route.query.brinco)
+  const animalDaUrl = animais.value.find((animal) => animal.brinco === Number(route.query.brinco))
 
-  if (Number.isInteger(brincoDaUrl) && animais.value.some((animal) => animal.brinco === brincoDaUrl)) {
-    brinco.value = brincoDaUrl
+  if (animalDaUrl) {
+    propriedadeId.value = lotePorId.value.get(animalDaUrl.loteId)?.propriedadeId ?? null
+    brinco.value = animalDaUrl.brinco
     await carregarHistorico()
+  } else if (propriedades.value.length === 1) {
+    propriedadeId.value = propriedades.value[0]!.id
   }
 })
 </script>

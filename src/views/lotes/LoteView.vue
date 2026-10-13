@@ -335,7 +335,7 @@ import { metaDesempenhoService } from '@/services/metaDesempenhoService'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
-import { formatarNumero } from '@/utils/formatters'
+import { formatarData, formatarNumero } from '@/utils/formatters'
 import type { Animal } from '@/types/animal'
 import { FINALIDADE_LOTE_LABEL, type FinalidadeLote, type Lote } from '@/types/lote'
 import type { MetaDesempenho } from '@/types/metaDesempenho'
@@ -480,10 +480,6 @@ function descricaoPropriedade(propriedade: Propriedade): string {
   return `${propriedade.nome} (${propriedade.localizacao})`
 }
 
-function formatarData(data: string) {
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano}`
-}
 
 async function carregarLotes() {
   lotes.value = await loteService.listAll()

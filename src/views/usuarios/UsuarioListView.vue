@@ -153,6 +153,7 @@ import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import { formatarDataHora } from '@/utils/formatters'
 import { PERFIL_LABEL, type Usuario } from '@/types/usuario'
 
 const auth = useAuthStore()
@@ -166,18 +167,6 @@ async function carregarUsuarios() {
   usuarios.value = await usuarioService.listAll()
 }
 
-function formatarDataHora(valor: string) {
-  const data = new Date(valor)
-
-  if (Number.isNaN(data.getTime())) {
-    return valor
-  }
-
-  return data.toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
-}
 
 async function excluirUsuario(usuario: Usuario) {
   if (usuario.id === auth.userId) {

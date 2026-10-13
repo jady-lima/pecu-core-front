@@ -318,7 +318,7 @@
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                {{ formatarPeso(animal.pesoAtual) }} kg
+                {{ formatarNumero(animal.pesoAtual) }} kg
               </td>
 
               <td class="px-4 py-3 text-slate-700">
@@ -395,6 +395,7 @@ import { loteService } from '@/services/loteService'
 import { propriedadeService } from '@/services/propriedadeService'
 import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
+import { dataHojeIso, formatarData, formatarNumero } from '@/utils/formatters'
 import {
   SEXO_ANIMAL_LABEL,
   STATUS_ANIMAL_CLASSE,
@@ -445,7 +446,7 @@ const novoStatus = ref<StatusAnimal | null>(null)
 const fimCarencia = ref<string | null>(null)
 const verificandoCarencia = ref(false)
 
-const dataHoje = obterDataHoje()
+const dataHoje = dataHojeIso()
 
 const lotePorId = computed(() => new Map(lotes.value.map((lote) => [lote.id, lote])))
 
@@ -505,24 +506,6 @@ function loteBloqueado(lote: Lote): boolean {
 
 function statusBloqueadoPorCarencia(status: StatusAnimal): boolean {
   return fimCarencia.value !== null && (status === 'VENDIDO' || status === 'ABATIDO')
-}
-
-function obterDataHoje() {
-  const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0')
-  const dia = String(hoje.getDate()).padStart(2, '0')
-
-  return `${ano}-${mes}-${dia}`
-}
-
-function formatarData(data: string) {
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano}`
-}
-
-function formatarPeso(valor: number) {
-  return valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
 }
 
 function nomeProdutor(id: number | null): string {
