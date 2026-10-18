@@ -9,10 +9,10 @@
     >
       <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h3 class="text-lg font-semibold text-slate-900">
-          Registrar alimentação
+          {{ alimentacaoEditando ? `Editar alimentação - brinco ${alimentacaoEditando.brinco}` : 'Registrar alimentação' }}
         </h3>
 
-        <div class="inline-flex rounded-md bg-slate-100 p-1 text-sm">
+        <div v-if="!alimentacaoEditando" class="inline-flex rounded-md bg-slate-100 p-1 text-sm">
           <button
             type="button"
             @click="alterarModo('animal')"
@@ -34,51 +34,59 @@
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <div>
-          <label for="registro-propriedade" class="mb-1 block text-sm font-medium text-slate-700">
-            Propriedade
-          </label>
-
-          <SearchableSelect
-            id="registro-propriedade"
-            v-model="propriedadeRegistro"
-            :options="opcoesPropriedade"
-            :disabled="loading || propriedades.length === 0"
-            placeholder="Digite o nome da propriedade"
-            texto-vazio="Nenhuma propriedade encontrada."
-            @change="trocarPropriedadeRegistro"
-          />
+        <div v-if="alimentacaoEditando" class="md:col-span-2 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
+          Animal <strong>brinco {{ alimentacaoEditando.brinco }}</strong>
+          <template v-if="animalDoFormulario"> - {{ nomeLote(animalDoFormulario.loteId) }}</template>.
+          O animal não pode ser alterado; para trocar, exclua este registro e registre novamente.
         </div>
 
-        <div v-if="modo === 'animal'">
-          <label for="registro-animal" class="mb-1 block text-sm font-medium text-slate-700">
-            Animal
-          </label>
+        <template v-if="!alimentacaoEditando">
+          <div>
+            <label for="registro-propriedade" class="mb-1 block text-sm font-medium text-slate-700">
+              Propriedade
+            </label>
 
-          <SearchableSelect
-            id="registro-animal"
-            v-model="brincoRegistro"
-            :options="opcoesAnimalRegistro"
-            :disabled="propriedadeRegistro === null"
-            :placeholder="propriedadeRegistro === null ? 'Escolha a propriedade primeiro' : 'Digite o brinco'"
-            texto-vazio="Nenhum animal ativo nesta propriedade."
-          />
-        </div>
+            <SearchableSelect
+              id="registro-propriedade"
+              v-model="propriedadeRegistro"
+              :options="opcoesPropriedade"
+              :disabled="loading || propriedades.length === 0"
+              placeholder="Digite o nome da propriedade"
+              texto-vazio="Nenhuma propriedade encontrada."
+              @change="trocarPropriedadeRegistro"
+            />
+          </div>
 
-        <div v-else>
-          <label for="registro-lote" class="mb-1 block text-sm font-medium text-slate-700">
-            Lote
-          </label>
+          <div v-if="modo === 'animal'">
+            <label for="registro-animal" class="mb-1 block text-sm font-medium text-slate-700">
+              Animal
+            </label>
 
-          <SearchableSelect
-            id="registro-lote"
-            v-model="loteId"
-            :options="opcoesLoteRegistro"
-            :disabled="propriedadeRegistro === null"
-            :placeholder="propriedadeRegistro === null ? 'Escolha a propriedade primeiro' : 'Digite o número do lote'"
-            texto-vazio="Nenhum lote com animais ativos nesta propriedade."
-          />
-        </div>
+            <SearchableSelect
+              id="registro-animal"
+              v-model="brincoRegistro"
+              :options="opcoesAnimalRegistro"
+              :disabled="propriedadeRegistro === null"
+              :placeholder="propriedadeRegistro === null ? 'Escolha a propriedade primeiro' : 'Digite o brinco'"
+              texto-vazio="Nenhum animal ativo nesta propriedade."
+            />
+          </div>
+
+          <div v-else>
+            <label for="registro-lote" class="mb-1 block text-sm font-medium text-slate-700">
+              Lote
+            </label>
+
+            <SearchableSelect
+              id="registro-lote"
+              v-model="loteId"
+              :options="opcoesLoteRegistro"
+              :disabled="propriedadeRegistro === null"
+              :placeholder="propriedadeRegistro === null ? 'Escolha a propriedade primeiro' : 'Digite o número do lote'"
+              texto-vazio="Nenhum lote com animais ativos nesta propriedade."
+            />
+          </div>
+        </template>
 
         <div>
           <label class="mb-1 block text-sm font-medium text-slate-700">
@@ -108,7 +116,7 @@
           <input
             v-model="data"
             type="date"
-            :min="modo === 'animal' ? animalRegistro?.dataNascimento : undefined"
+            :min="modo === 'animal' ? animalDoFormulario?.dataNascimento : undefined"
             :max="dataHoje"
             class="w-full rounded-md border border-slate-300 px-3 py-2"
             required
@@ -163,13 +171,22 @@
         </template>.
       </div>
 
-      <div class="mt-5">
+      <div class="mt-5 flex gap-2">
         <button
           type="submit"
           :disabled="salvando || loading"
           class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
-          {{ salvando ? 'Salvando...' : 'Registrar alimentação' }}
+          {{ salvando ? 'Salvando...' : alimentacaoEditando ? 'Salvar alterações' : 'Registrar alimentação' }}
+        </button>
+
+        <button
+          v-if="alimentacaoEditando"
+          type="button"
+          @click="cancelarEdicao"
+          class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        >
+          Cancelar
         </button>
       </div>
 
@@ -225,6 +242,10 @@
         {{ erroHistorico }}
       </p>
 
+      <p v-if="sucessoHistorico" class="mb-4 text-sm text-green-700">
+        {{ sucessoHistorico }}
+      </p>
+
       <p v-if="brincoHistorico === null" class="text-slate-500">
         Selecione um animal para ver as alimentações registradas.
       </p>
@@ -244,11 +265,16 @@
               <th class="px-4 py-3 font-medium">Tipo</th>
               <th class="px-4 py-3 font-medium">Quantidade</th>
               <th class="px-4 py-3 font-medium">Valor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="item in historico" :key="item.id">
+            <tr
+              v-for="item in historico"
+              :key="item.id"
+              :class="alimentacaoEditando?.id === item.id ? 'bg-amber-50' : ''"
+            >
               <td class="px-4 py-3 text-slate-700">
                 {{ formatarData(item.data) }}
               </td>
@@ -264,6 +290,27 @@
               <td class="px-4 py-3 text-slate-700">
                 {{ item.valor === null ? '-' : formatarMoeda(item.valor) }}
               </td>
+
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="editarAlimentacao(item)"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    v-if="podeExcluir"
+                    type="button"
+                    @click="excluirAlimentacao(item)"
+                    class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
 
@@ -272,6 +319,7 @@
               <td class="px-4 py-3" colspan="2">Total</td>
               <td class="px-4 py-3">{{ formatarNumero(totalQuantidade) }} kg</td>
               <td class="px-4 py-3">{{ formatarMoeda(totalValor) }}</td>
+              <td class="px-4 py-3" />
             </tr>
           </tfoot>
         </table>
@@ -318,6 +366,10 @@ const carregandoHistorico = ref(false)
 const erro = ref('')
 const sucesso = ref('')
 const erroHistorico = ref('')
+const sucessoHistorico = ref('')
+
+const podeExcluir = computed(() => auth.isAdmin || auth.isProdutor)
+const alimentacaoEditando = ref<Alimentacao | null>(null)
 
 const dataHoje = dataHojeIso()
 
@@ -341,6 +393,11 @@ const animaisAtivos = computed(() => animais.value.filter((animal) => animal.sta
 const animalRegistro = computed(
   () => animais.value.find((animal) => animal.brinco === brincoRegistro.value) ?? null,
 )
+
+const animalDoFormulario = computed(() => {
+  const brinco = alimentacaoEditando.value?.brinco ?? brincoRegistro.value
+  return animais.value.find((animal) => animal.brinco === brinco) ?? null
+})
 
 const ativosPorLote = computed(() => {
   const contagem = new Map<number, number>()
@@ -430,17 +487,62 @@ function limparFormulario() {
   quantidade.value = ''
   valor.value = ''
   data.value = dataHoje
+  alimentacaoEditando.value = null
+}
+
+function editarAlimentacao(item: Alimentacao) {
+  alimentacaoEditando.value = item
+  modo.value = 'animal'
+  tipo.value = item.tipo
+  quantidade.value = item.quantidade
+  data.value = item.data
+  valor.value = item.valor ?? ''
+  erro.value = ''
+  sucesso.value = ''
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelarEdicao() {
+  limparFormulario()
+  erro.value = ''
+  sucesso.value = ''
+}
+
+async function excluirAlimentacao(item: Alimentacao) {
+  if (!confirm(`Excluir a alimentação de ${formatarData(item.data)} do animal ${item.brinco}?${item.valor !== null ? ' O custo lançado junto também será removido.' : ''}`)) {
+    return
+  }
+
+  erroHistorico.value = ''
+  sucessoHistorico.value = ''
+
+  try {
+    await alimentacaoService.remove(item.id)
+
+    if (alimentacaoEditando.value?.id === item.id) {
+      cancelarEdicao()
+    }
+
+    await carregarHistorico()
+    sucessoHistorico.value = 'Alimentação excluída com sucesso.'
+  } catch (err) {
+    console.error('Falha ao excluir alimentação', err)
+    erroHistorico.value = getApiErrorMessage(err, 'Não foi possível excluir a alimentação.')
+  }
 }
 
 function trocarPropriedadeHistorico() {
   brincoHistorico.value = null
   alimentacoes.value = []
   erroHistorico.value = ''
+  sucessoHistorico.value = ''
 }
 
 async function carregarHistorico() {
   alimentacoes.value = []
   erroHistorico.value = ''
+  sucessoHistorico.value = ''
 
   if (brincoHistorico.value === null) {
     return
@@ -472,7 +574,18 @@ async function salvar() {
   salvando.value = true
 
   try {
-    if (modo.value === 'animal') {
+    if (alimentacaoEditando.value) {
+      await alimentacaoService.update(alimentacaoEditando.value.id, {
+        tipo: tipo.value,
+        quantidade: quantidade.value,
+        data: data.value,
+        valor: valorInformado,
+      })
+
+      sucesso.value = `Alimentação do animal ${alimentacaoEditando.value.brinco} atualizada.`
+
+      await carregarHistorico()
+    } else if (modo.value === 'animal') {
       if (brincoRegistro.value === null) {
         erro.value = 'Selecione o animal.'
         return
@@ -516,8 +629,8 @@ async function salvar() {
 
     limparFormulario()
   } catch (err) {
-    console.error('Falha ao registrar alimentação', err)
-    erro.value = getApiErrorMessage(err, 'Não foi possível registrar a alimentação.')
+    console.error('Falha ao salvar alimentação', err)
+    erro.value = getApiErrorMessage(err, 'Não foi possível salvar a alimentação.')
   } finally {
     salvando.value = false
   }

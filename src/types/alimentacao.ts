@@ -30,3 +30,10 @@ export interface AlimentacaoLotePayload {
   data: string
   valor: number | null
 }
+
+export interface AlimentacaoUpdatePayload {
+  tipo: TipoAlimentacao
+  quantidade: number
+  data: string
+  valor: number | null
+}
