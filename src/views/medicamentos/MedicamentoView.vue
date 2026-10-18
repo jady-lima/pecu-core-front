@@ -52,12 +52,12 @@
     </p>
 
     <form
-      v-if="animalSelecionado && animalSelecionado.status === 'ATIVO'"
+      v-if="animalSelecionado && (animalSelecionado.status === 'ATIVO' || medicamentoEditando)"
       @submit.prevent="salvar"
       class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
     >
       <h3 class="mb-4 text-lg font-semibold text-slate-900">
-        Registrar medicamento - brinco {{ animalSelecionado.brinco }}
+        {{ medicamentoEditando ? 'Editar' : 'Registrar' }} medicamento - brinco {{ animalSelecionado.brinco }}
       </h3>
 
       <div class="grid gap-4 md:grid-cols-2">
@@ -172,13 +172,22 @@
         <strong v-else>sem carência</strong>
       </p>
 
-      <div class="mt-5">
+      <div class="mt-5 flex gap-2">
         <button
           type="submit"
           :disabled="salvando"
           class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
-          {{ salvando ? 'Salvando...' : 'Registrar medicamento' }}
+          {{ salvando ? 'Salvando...' : medicamentoEditando ? 'Salvar alterações' : 'Registrar medicamento' }}
+        </button>
+
+        <button
+          v-if="medicamentoEditando"
+          type="button"
+          @click="cancelarEdicao"
+          class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        >
+          Cancelar
         </button>
       </div>
 
@@ -207,6 +216,10 @@
         {{ erroHistorico }}
       </p>
 
+      <p v-if="sucessoHistorico" class="mb-3 text-sm text-green-700">
+        {{ sucessoHistorico }}
+      </p>
+
       <p v-if="carregandoHistorico" class="text-slate-500">
         Carregando histórico...
       </p>
@@ -223,11 +236,17 @@
               <th class="px-4 py-3 font-medium">Dosagem</th>
               <th class="px-4 py-3 font-medium">Carência</th>
               <th class="px-4 py-3 font-medium">Valor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="item in historico" :key="item.id" class="align-top">
+            <tr
+              v-for="item in historico"
+              :key="item.id"
+              class="align-top"
+              :class="medicamentoEditando?.id === item.id ? 'bg-amber-50' : ''"
+            >
               <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                 {{ formatarData(item.data) }}
               </td>
@@ -254,6 +273,27 @@
 
               <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                 {{ item.valor === null ? '-' : formatarMoeda(item.valor) }}
+              </td>
+
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="editarMedicamento(item)"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    v-if="podeExcluir"
+                    type="button"
+                    @click="excluirMedicamento(item)"
+                    class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -307,6 +347,10 @@ const erroInicial = ref('')
 const erroHistorico = ref('')
 const erro = ref('')
 const sucesso = ref('')
+const sucessoHistorico = ref('')
+
+const podeExcluir = computed(() => auth.isAdmin || auth.isProdutor)
+const medicamentoEditando = ref<Medicamento | null>(null)
 
 const dataHoje = dataHojeIso()
 
@@ -371,12 +415,54 @@ function limparFormulario() {
   carenciaDias.value = ''
   data.value = dataHoje
   valor.value = ''
+  medicamentoEditando.value = null
 }
 
 function limparMensagens() {
   erro.value = ''
   sucesso.value = ''
   erroHistorico.value = ''
+  sucessoHistorico.value = ''
+}
+
+function editarMedicamento(item: Medicamento) {
+  limparMensagens()
+  medicamentoEditando.value = item
+  nome.value = item.nome
+  motivo.value = item.motivo
+  dosagem.value = item.dosagem
+  carenciaDias.value = item.carenciaDias
+  data.value = item.data
+  valor.value = item.valor ?? ''
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelarEdicao() {
+  limparFormulario()
+  limparMensagens()
+}
+
+async function excluirMedicamento(item: Medicamento) {
+  if (!confirm(`Excluir o medicamento "${item.nome}" de ${formatarData(item.data)}?${item.valor !== null ? ' O custo lançado junto também será removido.' : ''}`)) {
+    return
+  }
+
+  limparMensagens()
+
+  try {
+    await medicamentoService.remove(item.id)
+
+    if (medicamentoEditando.value?.id === item.id) {
+      limparFormulario()
+    }
+
+    await carregarHistorico()
+    sucessoHistorico.value = 'Medicamento excluído com sucesso.'
+  } catch (err) {
+    console.error('Falha ao excluir medicamento', err)
+    erroHistorico.value = getApiErrorMessage(err, 'Não foi possível excluir o medicamento.')
+  }
 }
 
 function trocarPropriedade() {
@@ -434,22 +520,28 @@ async function salvar() {
   salvando.value = true
 
   try {
-    await medicamentoService.create({
-      brinco: brinco.value,
+    const payload = {
       nome: nome.value.trim(),
       motivo: motivo.value.trim(),
       dosagem: dosagem.value,
       carenciaDias: carenciaDias.value,
       data: data.value,
       valor: typeof valor.value === 'number' && valor.value > 0 ? valor.value : null,
-    })
+    }
 
-    sucesso.value = 'Medicamento registrado com sucesso.'
+    if (medicamentoEditando.value) {
+      await medicamentoService.update(medicamentoEditando.value.id, payload)
+      sucesso.value = 'Medicamento atualizado com sucesso.'
+    } else {
+      await medicamentoService.create({ brinco: brinco.value, ...payload })
+      sucesso.value = 'Medicamento registrado com sucesso.'
+    }
+
     limparFormulario()
     await carregarHistorico()
   } catch (err) {
-    console.error('Falha ao registrar medicamento', err)
-    erro.value = getApiErrorMessage(err, 'Não foi possível registrar o medicamento.')
+    console.error('Falha ao salvar medicamento', err)
+    erro.value = getApiErrorMessage(err, 'Não foi possível salvar o medicamento.')
   } finally {
     salvando.value = false
   }

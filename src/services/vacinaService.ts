@@ -17,4 +17,8 @@ export const vacinaService = {
   update(id: number | string, payload: VacinaPayload) {
     return http.put<Vacina>(`/vacinas/${id}`, payload)
   },
+
+  remove(id: number) {
+    return http.delete<void>(`/vacinas/${id}`)
+  },
 }

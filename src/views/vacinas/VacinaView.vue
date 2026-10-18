@@ -167,13 +167,24 @@
               </td>
 
               <td class="px-4 py-3">
-                <button
-                  type="button"
-                  @click="editarVacina(vacina)"
-                  class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
-                >
-                  Editar
-                </button>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="editarVacina(vacina)"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    v-if="podeExcluir"
+                    type="button"
+                    @click="excluirVacina(vacina)"
+                    class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -194,9 +205,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 import { vacinaService } from '@/services/vacinaService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import type { Vacina } from '@/types/vacina'
+
+const auth = useAuthStore()
+const podeExcluir = computed(() => auth.isAdmin || auth.isProdutor)
 
 const vacinas = ref<Vacina[]>([])
 const loading = ref(true)
@@ -293,6 +308,32 @@ function cancelarEdicao() {
   limparFormulario()
   erro.value = ''
   sucesso.value = ''
+}
+
+async function excluirVacina(vacina: Vacina) {
+  if (!confirm(`Tem certeza que deseja excluir a vacina "${vacina.nome}" do catálogo?`)) {
+    return
+  }
+
+  erro.value = ''
+  sucesso.value = ''
+
+  try {
+    await vacinaService.remove(vacina.id)
+
+    if (editandoId.value === vacina.id) {
+      limparFormulario()
+    }
+
+    await carregarVacinas()
+    sucesso.value = 'Vacina excluída com sucesso.'
+  } catch (err) {
+    console.error('Falha ao excluir vacina', err)
+    erro.value = getApiErrorMessage(
+      err,
+      'Não foi possível excluir a vacina. Vacinas já aplicadas em algum animal não podem ser excluídas.',
+    )
+  }
 }
 
 onMounted(async () => {

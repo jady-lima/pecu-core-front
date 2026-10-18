@@ -44,12 +44,12 @@
     </section>
 
     <form
-      v-if="animalSelecionado && animalSelecionado.status === 'ATIVO'"
+      v-if="animalSelecionado && (animalSelecionado.status === 'ATIVO' || vacinacaoEditando)"
       @submit.prevent="salvar"
       class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
     >
       <h3 class="mb-4 text-lg font-semibold text-slate-900">
-        Registrar vacinação - brinco {{ animalSelecionado.brinco }}
+        {{ vacinacaoEditando ? 'Editar' : 'Registrar' }} vacinação - brinco {{ animalSelecionado.brinco }}
       </h3>
 
       <div class="grid gap-4 md:grid-cols-2">
@@ -68,7 +68,8 @@
           />
 
           <p v-if="!loading && vacinas.length === 0" class="mt-1 text-xs text-amber-700">
-            O catálogo de vacinas está vazio. Peça ao administrador para cadastrar as vacinas.
+            O catálogo de vacinas está vazio.
+            <RouterLink :to="{ name: 'vacinas' }" class="font-medium underline">Cadastre as vacinas no catálogo.</RouterLink>
           </p>
         </div>
 
@@ -200,13 +201,26 @@
         </p>
       </div>
 
-      <div class="mt-5">
+      <p v-if="vacinacaoEditando" class="mt-4 text-xs text-amber-700">
+        Ao salvar, a próxima dose e o fim da carência são recalculados com base na vacina e na data informadas.
+      </p>
+
+      <div class="mt-5 flex gap-2">
         <button
           type="submit"
           :disabled="salvando"
           class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
-          {{ salvando ? 'Salvando...' : 'Registrar vacinação' }}
+          {{ salvando ? 'Salvando...' : vacinacaoEditando ? 'Salvar alterações' : 'Registrar vacinação' }}
+        </button>
+
+        <button
+          v-if="vacinacaoEditando"
+          type="button"
+          @click="cancelarEdicao"
+          class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        >
+          Cancelar
         </button>
       </div>
 
@@ -235,6 +249,10 @@
         {{ erroHistorico }}
       </p>
 
+      <p v-if="sucessoHistorico" class="mb-3 text-sm text-green-700">
+        {{ sucessoHistorico }}
+      </p>
+
       <p v-if="carregandoHistorico" class="text-slate-500">
         Carregando histórico...
       </p>
@@ -253,11 +271,17 @@
               <th class="px-4 py-3 font-medium">Próxima dose</th>
               <th class="px-4 py-3 font-medium">Carência</th>
               <th class="px-4 py-3 font-medium">Valor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="item in historico" :key="item.id" class="align-top">
+            <tr
+              v-for="item in historico"
+              :key="item.id"
+              class="align-top"
+              :class="vacinacaoEditando?.id === item.id ? 'bg-amber-50' : ''"
+            >
               <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                 {{ formatarData(item.data) }}
               </td>
@@ -302,6 +326,27 @@
 
               <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                 {{ item.valor === null ? '-' : formatarMoeda(item.valor) }}
+              </td>
+
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="editarVacinacao(item)"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    v-if="podeExcluir"
+                    type="button"
+                    @click="excluirVacinacao(item)"
+                    class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -363,6 +408,10 @@ const erroInicial = ref('')
 const erroHistorico = ref('')
 const erro = ref('')
 const sucesso = ref('')
+const sucessoHistorico = ref('')
+
+const podeExcluir = computed(() => auth.isAdmin || auth.isProdutor)
+const vacinacaoEditando = ref<Vacinacao | null>(null)
 
 const dataHoje = dataHojeIso()
 
@@ -430,6 +479,11 @@ const aplicadores = computed<OpcaoSelect[]>(() => [
       value: veterinario.id,
       label: `${veterinario.nome} (veterinário)`,
     })),
+  ...(vacinacaoEditando.value &&
+  vacinacaoEditando.value.aplicadorId !== auth.userId &&
+  !veterinarios.value.some((veterinario) => veterinario.id === vacinacaoEditando.value!.aplicadorId)
+    ? [{ value: vacinacaoEditando.value.aplicadorId, label: vacinacaoEditando.value.aplicador }]
+    : []),
 ])
 
 const historico = computed(() => [...vacinacoes.value].reverse())
@@ -471,12 +525,55 @@ function limparFormulario() {
   doseAplicada.value = ''
   valor.value = ''
   observacoes.value = ''
+  vacinacaoEditando.value = null
 }
 
 function limparMensagens() {
   erro.value = ''
   sucesso.value = ''
   erroHistorico.value = ''
+  sucessoHistorico.value = ''
+}
+
+function editarVacinacao(item: Vacinacao) {
+  limparMensagens()
+  vacinacaoEditando.value = item
+  vacinaId.value = item.vacinaId
+  aplicadorId.value = item.aplicadorId
+  data.value = item.data
+  loteVacina.value = item.loteVacina
+  doseAplicada.value = item.doseAplicada
+  valor.value = item.valor ?? ''
+  observacoes.value = item.observacoes ?? ''
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelarEdicao() {
+  limparFormulario()
+  limparMensagens()
+}
+
+async function excluirVacinacao(item: Vacinacao) {
+  if (!confirm(`Excluir a vacinação "${item.nomeVacina}" de ${formatarData(item.data)}?${item.valor !== null ? ' O custo lançado junto também será removido.' : ''}`)) {
+    return
+  }
+
+  limparMensagens()
+
+  try {
+    await vacinacaoService.remove(item.id)
+
+    if (vacinacaoEditando.value?.id === item.id) {
+      limparFormulario()
+    }
+
+    await carregarHistorico()
+    sucessoHistorico.value = 'Vacinação excluída com sucesso.'
+  } catch (err) {
+    console.error('Falha ao excluir vacinação', err)
+    erroHistorico.value = getApiErrorMessage(err, 'Não foi possível excluir a vacinação.')
+  }
 }
 
 function trocarPropriedade() {
@@ -552,8 +649,7 @@ async function salvar() {
   salvando.value = true
 
   try {
-    await vacinacaoService.create({
-      brinco: brinco.value,
+    const payload = {
       vacinaId: vacinaId.value,
       aplicadorId: aplicadorId.value,
       data: data.value,
@@ -561,14 +657,21 @@ async function salvar() {
       doseAplicada: doseAplicada.value,
       observacoes: observacoes.value.trim() || null,
       valor: typeof valor.value === 'number' && valor.value > 0 ? valor.value : null,
-    })
+    }
 
-    sucesso.value = 'Vacinação registrada com sucesso.'
+    if (vacinacaoEditando.value) {
+      await vacinacaoService.update(vacinacaoEditando.value.id, payload)
+      sucesso.value = 'Vacinação atualizada com sucesso.'
+    } else {
+      await vacinacaoService.create({ brinco: brinco.value, ...payload })
+      sucesso.value = 'Vacinação registrada com sucesso.'
+    }
+
     limparFormulario()
     await carregarHistorico()
   } catch (err) {
-    console.error('Falha ao registrar vacinação', err)
-    erro.value = getApiErrorMessage(err, 'Não foi possível registrar a vacinação.')
+    console.error('Falha ao salvar vacinação', err)
+    erro.value = getApiErrorMessage(err, 'Não foi possível salvar a vacinação.')
   } finally {
     salvando.value = false
   }

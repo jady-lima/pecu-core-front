@@ -19,3 +19,5 @@ export interface MedicamentoPayload {
   data: string
   valor: number | null
 }
+
+export type MedicamentoUpdatePayload = Omit<MedicamentoPayload, 'brinco'>

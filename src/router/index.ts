@@ -87,7 +87,7 @@ const router = createRouter({
       path: '/vacinas',
       name: 'vacinas',
       component: () => import('@/views/vacinas/VacinaView.vue'),
-      meta: { roles: ['ADMIN'] },
+      meta: { roles: ['ADMIN', 'PRODUTOR', 'VETERINARIO'] },
     },
     {
       path: '/metas-desempenho',

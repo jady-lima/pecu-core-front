@@ -25,3 +25,5 @@ export interface VacinacaoPayload {
   observacoes: string | null
   valor: number | null
 }
+
+export type VacinacaoUpdatePayload = Omit<VacinacaoPayload, 'brinco'>
