@@ -169,8 +169,8 @@ function fecharBoasVindas() {
   }
 }
 
-function sair() {
-  auth.logout()
+async function sair() {
+  await auth.sair()
   router.push({ name: 'login' })
 }
 </script>

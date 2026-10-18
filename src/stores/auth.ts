@@ -38,6 +38,15 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(TOKEN_KEY)
   }
 
+  async function sair() {
+    try {
+      await authService.logout()
+    } catch {
+    } finally {
+      logout()
+    }
+  }
+
   return {
     token,
     perfil,
@@ -50,5 +59,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     fetchPerfil,
     logout,
+    sair,
   }
 })

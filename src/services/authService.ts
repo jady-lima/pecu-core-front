@@ -11,6 +11,10 @@ export const authService = {
     return http.post<LoginResponse>('/auth/login', credentials, { skipAuth: true })
   },
 
+  logout() {
+    return http.post<void>('/auth/logout')
+  },
+
   me() {
     return http.get<UsuarioLogado>('/auth/me')
   },
