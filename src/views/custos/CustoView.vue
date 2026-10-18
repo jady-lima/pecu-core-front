@@ -42,7 +42,7 @@
       class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200"
     >
       <h3 class="mb-4 text-lg font-semibold text-slate-900">
-        Lançar custo manual
+        {{ editandoId ? 'Editar custo manual' : 'Lançar custo manual' }}
       </h3>
 
       <div class="grid gap-4 md:grid-cols-3">
@@ -162,13 +162,22 @@
         </div>
       </div>
 
-      <div class="mt-5">
+      <div class="mt-5 flex gap-2">
         <button
           type="submit"
           :disabled="salvando || loading"
           class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
-          {{ salvando ? 'Salvando...' : 'Lançar custo' }}
+          {{ salvando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Lançar custo' }}
+        </button>
+
+        <button
+          v-if="editandoId"
+          type="button"
+          @click="cancelarEdicao"
+          class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        >
+          Cancelar
         </button>
       </div>
 
@@ -261,6 +270,10 @@
         {{ erroLista }}
       </p>
 
+      <p v-if="sucessoLista" class="mb-3 text-sm text-green-700">
+        {{ sucessoLista }}
+      </p>
+
       <p v-if="loading" class="text-slate-500">
         Carregando...
       </p>
@@ -278,11 +291,16 @@
               <th class="px-4 py-3 font-medium">Vinculado a</th>
               <th class="px-4 py-3 font-medium">Propriedade</th>
               <th class="px-4 py-3 text-right font-medium">Valor</th>
+              <th class="px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="custo in custosFiltrados" :key="custo.id">
+            <tr
+              v-for="custo in custosFiltrados"
+              :key="custo.id"
+              :class="editandoId === custo.id ? 'bg-amber-50' : ''"
+            >
               <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                 {{ formatarData(custo.data) }}
               </td>
@@ -311,6 +329,30 @@
               <td class="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-900">
                 {{ formatarMoeda(custo.valor) }}
               </td>
+
+              <td class="px-4 py-3">
+                <div v-if="custo.origem === 'MANUAL'" class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="editarCusto(custo)"
+                    class="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="excluirCusto(custo)"
+                    class="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
+                  >
+                    Excluir
+                  </button>
+                </div>
+
+                <p v-else class="text-xs text-slate-500">
+                  Altere pelo registro de {{ TIPO_CUSTO_LABEL[custo.tipo].toLowerCase() }}
+                </p>
+              </td>
             </tr>
           </tbody>
 
@@ -318,6 +360,7 @@
             <tr>
               <td class="px-4 py-3" colspan="5">Total</td>
               <td class="whitespace-nowrap px-4 py-3 text-right">{{ formatarMoeda(total) }}</td>
+              <td class="px-4 py-3" />
             </tr>
           </tfoot>
         </table>
@@ -374,6 +417,9 @@ const salvando = ref(false)
 const erro = ref('')
 const sucesso = ref('')
 const erroLista = ref('')
+const sucessoLista = ref('')
+
+const editandoId = ref<number | null>(null)
 
 const dataHoje = dataHojeIso()
 
@@ -510,6 +556,52 @@ function limparFormulario() {
   data.value = dataHoje
   destinoLoteId.value = null
   destinoAnimalId.value = null
+  editandoId.value = null
+}
+
+function editarCusto(custo: Custo) {
+  editandoId.value = custo.id
+  tipo.value = custo.tipo
+  valor.value = custo.valor
+  data.value = custo.data
+  tipoDestino.value = custo.animalId !== null ? 'animal' : custo.loteId !== null ? 'lote' : 'propriedade'
+  destinoPropriedadeId.value = propriedadeDoCusto(custo)?.id ?? null
+  destinoLoteId.value = custo.loteId
+  destinoAnimalId.value = custo.animalId
+  erro.value = ''
+  sucesso.value = ''
+  sucessoLista.value = ''
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelarEdicao() {
+  limparFormulario()
+  erro.value = ''
+  sucesso.value = ''
+}
+
+async function excluirCusto(custo: Custo) {
+  if (!confirm(`Excluir o custo de ${formatarMoeda(custo.valor)} (${TIPO_CUSTO_LABEL[custo.tipo]}) de ${formatarData(custo.data)}?`)) {
+    return
+  }
+
+  erroLista.value = ''
+  sucessoLista.value = ''
+
+  try {
+    await custoService.remove(custo.id)
+
+    if (editandoId.value === custo.id) {
+      cancelarEdicao()
+    }
+
+    await carregarCustos()
+    sucessoLista.value = 'Custo excluído com sucesso.'
+  } catch (err) {
+    console.error('Falha ao excluir custo', err)
+    erroLista.value = getApiErrorMessage(err, 'Não foi possível excluir o custo.')
+  }
 }
 
 async function carregarCustos() {
@@ -539,19 +631,26 @@ async function salvar() {
   salvando.value = true
 
   try {
-    await custoService.create({
+    const payload = {
       tipo: tipo.value,
       valor: valor.value,
       data: data.value,
       ...destino,
-    })
+    }
 
-    sucesso.value = `Custo de ${formatarMoeda(valor.value)} lançado com sucesso.`
+    if (editandoId.value !== null) {
+      await custoService.update(editandoId.value, payload)
+      sucesso.value = `Custo de ${formatarMoeda(valor.value)} atualizado com sucesso.`
+    } else {
+      await custoService.create(payload)
+      sucesso.value = `Custo de ${formatarMoeda(valor.value)} lançado com sucesso.`
+    }
+
     limparFormulario()
     await carregarCustos()
   } catch (err) {
-    console.error('Falha ao lançar custo', err)
-    erro.value = getApiErrorMessage(err, 'Não foi possível lançar o custo.')
+    console.error('Falha ao salvar custo', err)
+    erro.value = getApiErrorMessage(err, 'Não foi possível salvar o custo.')
   } finally {
     salvando.value = false
   }

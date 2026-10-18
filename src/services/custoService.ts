@@ -9,4 +9,12 @@ export const custoService = {
   create(payload: CustoPayload) {
     return http.post<Custo>('/custos', payload)
   },
+
+  update(id: number, payload: CustoPayload) {
+    return http.put<Custo>(`/custos/${id}`, payload)
+  },
+
+  remove(id: number) {
+    return http.delete<void>(`/custos/${id}`)
+  },
 }
