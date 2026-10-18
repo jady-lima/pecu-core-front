@@ -12,6 +12,18 @@ export const SITUACAO_GERAL_CLASSE: Record<SituacaoGeralAnimal, string> = {
   CRITICO: 'bg-red-100 text-red-800',
 }
 
+export type TipoAnalise = 'INDIVIDUAL' | 'COMPARATIVA'
+
+export const TIPO_ANALISE_LABEL: Record<TipoAnalise, string> = {
+  INDIVIDUAL: 'Individual',
+  COMPARATIVA: 'Comparativa com lote',
+}
+
+export const TIPO_ANALISE_CLASSE: Record<TipoAnalise, string> = {
+  INDIVIDUAL: 'bg-slate-100 text-slate-700',
+  COMPARATIVA: 'bg-indigo-100 text-indigo-800',
+}
+
 export interface RelatorioAnalise {
   situacaoGeral: SituacaoGeralAnimal
   resumo: string
@@ -27,7 +39,7 @@ export interface AnaliseIA {
   id: number
   animalId: number
   brinco: number
-  tipo: 'INDIVIDUAL' | 'COMPARATIVA'
+  tipo: TipoAnalise
   dataGeracao: string
   modelo: string
   relatorio: RelatorioAnalise | null

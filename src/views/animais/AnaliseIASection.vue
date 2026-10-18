@@ -7,21 +7,34 @@
         </h3>
 
         <p class="mt-1 text-sm text-slate-500">
-          Gera um relatório a partir das pesagens, alimentação, vacinas, medicamentos e metas deste animal.
+          A análise individual usa as pesagens, alimentação, vacinas, medicamentos e metas deste animal.
+          A comparativa confronta esses dados com os demais animais do Lote {{ numeroLote }}.
         </p>
       </div>
 
-      <button
-        type="button"
-        :disabled="gerando || carregando"
-        @click="gerar"
-        class="shrink-0 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
-      >
-        {{ gerando ? 'Gerando análise...' : 'Gerar nova análise' }}
-      </button>
+      <div class="flex shrink-0 flex-wrap gap-2">
+        <button
+          type="button"
+          :disabled="gerando !== null || carregando"
+          @click="gerar('INDIVIDUAL')"
+          class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+        >
+          {{ gerando === 'INDIVIDUAL' ? 'Gerando análise...' : 'Gerar análise individual' }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="gerando !== null || carregando"
+          @click="gerar('COMPARATIVA')"
+          class="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-600 disabled:opacity-60"
+        >
+          {{ gerando === 'COMPARATIVA' ? 'Gerando análise...' : 'Gerar análise comparativa' }}
+        </button>
+      </div>
     </div>
 
     <p v-if="gerando" class="mt-4 text-sm text-blue-700">
+      {{ gerando === 'COMPARATIVA' ? `Comparando o animal com os demais do Lote ${numeroLote}.` : 'Analisando os dados do animal.' }}
       A análise pode levar alguns segundos.
     </p>
 
@@ -57,6 +70,7 @@
             <thead class="bg-slate-100 text-slate-600">
               <tr>
                 <th class="px-4 py-3 font-medium">Gerada em</th>
+                <th class="px-4 py-3 font-medium">Tipo</th>
                 <th class="px-4 py-3 font-medium">Situação</th>
                 <th class="px-4 py-3 font-medium">Resumo</th>
                 <th class="px-4 py-3 font-medium">Ações</th>
@@ -67,6 +81,15 @@
               <tr v-for="analise in analises" :key="analise.id" class="align-top">
                 <td class="whitespace-nowrap px-4 py-3 text-slate-700">
                   {{ formatarDataHora(analise.dataGeracao) }}
+                </td>
+
+                <td class="whitespace-nowrap px-4 py-3">
+                  <span
+                    class="rounded-full px-2 py-0.5 text-xs font-medium"
+                    :class="TIPO_ANALISE_CLASSE[analise.tipo]"
+                  >
+                    {{ TIPO_ANALISE_LABEL[analise.tipo] }}
+                  </span>
                 </td>
 
                 <td class="whitespace-nowrap px-4 py-3">
@@ -148,10 +171,24 @@
             {{ SITUACAO_GERAL_LABEL[analiseAberta.relatorio.situacaoGeral] }}
           </span>
 
+          <span
+            class="rounded-full px-3 py-1 text-sm font-medium"
+            :class="TIPO_ANALISE_CLASSE[analiseAberta.tipo]"
+          >
+            {{ TIPO_ANALISE_LABEL[analiseAberta.tipo] }}
+          </span>
+
           <span class="text-xs text-slate-500">
             Gerada em {{ formatarDataHora(analiseAberta.dataGeracao) }}
           </span>
         </div>
+
+        <p
+          v-if="analiseAberta.tipo === 'COMPARATIVA'"
+          class="rounded-md bg-indigo-50 px-4 py-3 text-sm text-indigo-800 ring-1 ring-indigo-200"
+        >
+          Esta análise compara o desempenho deste animal com os demais animais do mesmo lote.
+        </p>
 
         <div>
           <h4 class="text-sm font-semibold text-slate-900">Resumo</h4>
@@ -194,11 +231,15 @@ import { formatarDataHora } from '@/utils/formatters'
 import {
   SITUACAO_GERAL_CLASSE,
   SITUACAO_GERAL_LABEL,
+  TIPO_ANALISE_CLASSE,
+  TIPO_ANALISE_LABEL,
   type AnaliseIA,
+  type TipoAnalise,
 } from '@/types/analiseIA'
 
 const props = defineProps<{
   animalId: number
+  numeroLote: number
 }>()
 
 interface ErroAnalise {
@@ -212,7 +253,7 @@ const analiseAberta = ref<AnaliseIA | null>(null)
 const modo = ref<'lista' | 'detalhe'>('lista')
 const carregando = ref(true)
 const carregandoDetalhe = ref(false)
-const gerando = ref(false)
+const gerando = ref<TipoAnalise | null>(null)
 const erro = ref<ErroAnalise | null>(null)
 
 const indiceAberta = computed(() =>
@@ -239,11 +280,15 @@ function ordenar(lista: AnaliseIA[]): AnaliseIA[] {
   return [...lista].sort((a, b) => b.dataGeracao.localeCompare(a.dataGeracao))
 }
 
-function traduzirErro(err: unknown): ErroAnalise {
+function traduzirErro(err: unknown, tipoAnalise: TipoAnalise): ErroAnalise {
   const mensagem = getApiErrorMessage(err, 'Não foi possível gerar a análise.')
 
   if (err instanceof HttpError && err.status === 422) {
-    return { tipo: 'dados', titulo: 'Dados insuficientes para análise', mensagem }
+    const titulo = tipoAnalise === 'COMPARATIVA'
+      ? 'Não foi possível comparar com o lote'
+      : 'Dados insuficientes para análise'
+
+    return { tipo: 'dados', titulo, mensagem }
   }
 
   if (err instanceof HttpError && err.status === 503) {
@@ -287,20 +332,22 @@ function voltarParaLista() {
   analiseAberta.value = null
 }
 
-async function gerar() {
+async function gerar(tipoAnalise: TipoAnalise) {
   erro.value = null
-  gerando.value = true
+  gerando.value = tipoAnalise
 
   try {
-    const nova = await analiseService.gerarIndividual(props.animalId)
+    const nova = tipoAnalise === 'COMPARATIVA'
+      ? await analiseService.gerarComparativa(props.animalId)
+      : await analiseService.gerarIndividual(props.animalId)
     analises.value = ordenar([nova, ...analises.value.filter((analise) => analise.id !== nova.id)])
     analiseAberta.value = nova
     modo.value = 'detalhe'
   } catch (err) {
     console.error('Falha ao gerar análise com IA', err)
-    erro.value = traduzirErro(err)
+    erro.value = traduzirErro(err, tipoAnalise)
   } finally {
-    gerando.value = false
+    gerando.value = null
   }
 }
 

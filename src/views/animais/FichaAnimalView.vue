@@ -290,6 +290,7 @@
         v-if="analiseCarregada"
         v-show="abaPrincipal === 'analise'"
         :animal-id="ficha.id"
+        :numero-lote="ficha.numeroLote"
       />
     </template>
   </PageLayout>

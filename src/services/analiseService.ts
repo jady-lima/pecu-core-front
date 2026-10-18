@@ -13,4 +13,8 @@ export const analiseService = {
   gerarIndividual(animalId: number) {
     return http.post<AnaliseIA>(`/analises/animal/${animalId}`)
   },
+
+  gerarComparativa(animalId: number) {
+    return http.post<AnaliseIA>(`/analises/animal/${animalId}/comparativa`)
+  },
 }
