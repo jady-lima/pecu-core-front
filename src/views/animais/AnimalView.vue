@@ -139,6 +139,25 @@
             </p>
           </div>
 
+          <div v-if="!animalEditando">
+            <label class="mb-1 block text-sm font-medium text-slate-700">
+              Data da primeira pesagem
+            </label>
+
+            <input
+              v-model="dataPrimeiraPesagem"
+              type="date"
+              :min="dataNascimento || undefined"
+              :max="dataHoje"
+              class="w-full rounded-md border border-slate-300 px-3 py-2"
+              required
+            />
+
+            <p class="mt-1 text-xs text-slate-500">
+              Informe a data em que o animal foi pesado. Ela pode ser anterior à data do cadastro.
+            </p>
+          </div>
+
         </div>
 
         <div class="mt-5 flex gap-2">
@@ -435,6 +454,7 @@ const sucesso = ref('')
 const animalEditando = ref<Animal | null>(null)
 const brinco = ref<number | null>(null)
 const dataNascimento = ref('')
+const dataPrimeiraPesagem = ref(dataHojeIso())
 const pesoAtual = ref<number | null>(null)
 const sexo = ref<SexoAnimal>('Macho')
 const loteId = ref<number | null>(null)
@@ -545,6 +565,7 @@ function limparMensagens() {
 function limparFormulario() {
   brinco.value = null
   dataNascimento.value = ''
+  dataPrimeiraPesagem.value = dataHojeIso()
   pesoAtual.value = null
   sexo.value = 'Macho'
   loteId.value = null
@@ -558,7 +579,8 @@ async function salvarAnimal() {
     brinco.value === null ||
     pesoAtual.value === null ||
     loteId.value === null ||
-    !dataNascimento.value
+    !dataNascimento.value ||
+    (!animalEditando.value && !dataPrimeiraPesagem.value)
   ) {
     erro.value = 'Preencha todos os campos do animal.'
     return
@@ -579,7 +601,10 @@ async function salvarAnimal() {
       await animalService.update(animalEditando.value.id, payload)
       sucesso.value = 'Animal atualizado com sucesso.'
     } else {
-      await animalService.create(payload)
+      await animalService.create({
+        ...payload,
+        dataPrimeiraPesagem: dataPrimeiraPesagem.value,
+      })
       sucesso.value = 'Animal cadastrado com sucesso.'
     }
 
