@@ -42,6 +42,7 @@ async function request<T>(
     // Não redireciona quando a própria tentativa de login falha.
     if (
       path !== '/auth/login' &&
+      path !== '/auth/logout' &&
       window.location.pathname !== '/login'
     ) {
       window.location.replace('/login')
