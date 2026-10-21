@@ -595,16 +595,14 @@ async function salvarAnimal() {
       pesoAtual: pesoAtual.value,
       sexo: sexo.value,
       loteId: loteId.value,
+      dataPrimeiraPesagem: animalEditando.value ? dataHojeIso() : dataPrimeiraPesagem.value,
     }
 
     if (animalEditando.value) {
       await animalService.update(animalEditando.value.id, payload)
       sucesso.value = 'Animal atualizado com sucesso.'
     } else {
-      await animalService.create({
-        ...payload,
-        dataPrimeiraPesagem: dataPrimeiraPesagem.value,
-      })
+      await animalService.create(payload)
       sucesso.value = 'Animal cadastrado com sucesso.'
     }
 

@@ -56,4 +56,5 @@ export interface AnimalPayload {
   pesoAtual: number
   sexo: SexoAnimal
   loteId: number
+  dataPrimeiraPesagem: string
 }
