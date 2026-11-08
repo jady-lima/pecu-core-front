@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed,onMounted,ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { PERFIL_LABEL } from '@/types/usuario'
-import {listarAlertas,atualizarStatusAlerta,type Alerta,type StatusAlerta} from '@/services/alertaService'
+import { alertaService } from '@/services/alertaService'
+import type { Alerta, StatusAlerta } from '@/types/alerta'
 
 type Secao = 'Administração' | 'Gestão' | 'Manejo' | 'Financeiro' | 'Catálogos'
 
@@ -205,7 +206,7 @@ async function carregarAlertas() {
   erroAlertas.value = ''
 
   try {
-    alertas.value = await listarAlertas()
+    alertas.value = await alertaService.listarAlertas()
   } catch (erro) {
     erroAlertas.value = 'Não foi possível carregar os alertas.'
     console.error(erro)
@@ -224,7 +225,7 @@ async function abrirAlertas() {
 
 async function marcarEmAnalise(alerta: Alerta) {
   try {
-    const atualizado = await atualizarStatusAlerta(
+    const atualizado = await alertaService.atualizarStatusAlerta(
       alerta.id,
       'EM_ANALISE',
     )
@@ -247,7 +248,7 @@ async function alterarStatus(
   status: StatusAlerta,
 ) {
   try {
-    const atualizado = await atualizarStatusAlerta(
+    const atualizado = await alertaService.atualizarStatusAlerta(
       alerta.id,
       status,
     )
