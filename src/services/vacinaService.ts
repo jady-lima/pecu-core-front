@@ -6,10 +6,6 @@ export const vacinaService = {
     return http.get<Vacina[]>('/vacinas')
   },
 
-  getById(id: number | string) {
-    return http.get<Vacina>(`/vacinas/${id}`)
-  },
-
   create(payload: VacinaPayload) {
     return http.post<Vacina>('/vacinas', payload)
   },

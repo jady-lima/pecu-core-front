@@ -6,10 +6,6 @@ export const loteService = {
     return http.get<Lote[]>('/lotes')
   },
 
-  getById(id: number | string) {
-    return http.get<Lote>(`/lotes/${id}`)
-  },
-
   create(payload: LotePayload) {
     return http.post<Lote>('/lotes', payload)
   },

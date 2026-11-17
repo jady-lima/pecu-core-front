@@ -6,10 +6,6 @@ export const animalService = {
     return http.get<Animal[]>('/animais')
   },
 
-  getById(id: number | string) {
-    return http.get<Animal>(`/animais/${id}`)
-  },
-
   getFicha(id: number | string) {
     return http.get<FichaAnimal>(`/animais/${id}/ficha`)
   },
