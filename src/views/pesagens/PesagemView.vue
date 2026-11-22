@@ -206,7 +206,7 @@
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                {{ item.pesagem.gmdCalculado === null ? '-' : `${formatarNumero(item.pesagem.gmdCalculado, 3)} kg/dia` }}
+                {{ item.pesagem.indiceDesempenho === null ? '-' : `${formatarNumero(item.pesagem.indiceDesempenho, 3)} kg/dia` }}
               </td>
             </tr>
           </tbody>

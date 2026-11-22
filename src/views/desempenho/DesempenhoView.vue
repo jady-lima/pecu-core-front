@@ -333,11 +333,11 @@
                       {{ formatarNumero(pesagem.peso) }} kg
                     </td>
                     <td class="px-4 py-3 text-right text-slate-700">
-                      {{
-                        pesagem.gmdCalculado === null
-                          ? '-'
-                          : `${formatarNumero(pesagem.gmdCalculado)} kg/dia`
-                      }}
+                    {{
+                       pesagem.indiceDesempenho === null
+                         ? '-'
+                         : `${formatarNumero(pesagem.indiceDesempenho)} kg/dia`
+                    }}
                     </td>
                   </tr>
                 </tbody>

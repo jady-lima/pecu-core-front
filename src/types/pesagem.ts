@@ -3,7 +3,8 @@ export interface Pesagem {
   brinco: number
   peso: number
   dataPesagem: string
-  gmdCalculado: number | null
+  indiceDesempenho: number | null
+  escoreCorporal: number | null
   aviso: string | null
 }
 

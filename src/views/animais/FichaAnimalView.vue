@@ -130,8 +130,8 @@
           <p class="mt-1 text-lg font-semibold text-slate-900">
             {{ ultimaPesagem ? formatarData(ultimaPesagem.dataPesagem) : 'Sem pesagens' }}
           </p>
-          <p v-if="ultimaPesagem?.gmdCalculado != null" class="mt-1 text-xs text-slate-500">
-            GMD {{ formatarNumero(ultimaPesagem.gmdCalculado, 3) }} kg/dia
+          <p v-if="ultimaPesagem?.indiceDesempenho != null" class="mt-1 text-xs text-slate-500">
+                      GMD {{ formatarNumero(ultimaPesagem.indiceDesempenho, 3) }} kg/dia
           </p>
         </div>
       </section>
@@ -170,7 +170,7 @@
                   <td class="px-4 py-3 text-slate-700">{{ formatarData(item.dataPesagem) }}</td>
                   <td class="px-4 py-3 font-medium text-slate-900">{{ formatarNumero(item.peso) }} kg</td>
                   <td class="px-4 py-3 text-slate-700">
-                    {{ item.gmdCalculado === null ? '-' : `${formatarNumero(item.gmdCalculado, 3)} kg/dia` }}
+                                        {{ item.indiceDesempenho === null ? '-' : `${formatarNumero(item.indiceDesempenho, 3)} kg/dia` }}
                   </td>
                 </tr>
               </tbody>
