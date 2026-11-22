@@ -81,12 +81,15 @@
               class="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
               required
             >
+              <option value="" disabled>
+                Selecione a finalidade
+              </option>
               <option
-                v-for="(label, valor) in FINALIDADE_LOTE_LABEL"
-                :key="valor"
-                :value="valor"
+                v-for="fase in fasesLote.fases"
+                :key="fase.codigo"
+                :value="fase.codigo"
               >
-                {{ label }}
+                {{ fase.descricao }}
               </option>
             </select>
           </div>
@@ -162,7 +165,7 @@
         </h3>
 
         <p class="mb-4 text-sm text-slate-500">
-          Padrão para {{ FINALIDADE_LOTE_LABEL[loteMeta.finalidade] }}:
+          Padrão para {{ fasesLote.descricaoFase(loteMeta.finalidade) }}:
           <span class="font-medium text-slate-700">
             {{ metaPadrao(loteMeta) === null ? 'não definido' : `${formatarNumero(metaPadrao(loteMeta)!, 3)} kg/dia` }}
           </span>
@@ -254,7 +257,7 @@
               </td>
 
               <td class="px-4 py-3 text-slate-700">
-                {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
+                {{ fasesLote.descricaoFase(lote.finalidade) }}
               </td>
 
               <td
@@ -338,6 +341,7 @@
 import { computed, onMounted, ref } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useFasesLoteStore } from '@/stores/fasesLote'
 import { animalService } from '@/services/animalService'
 import { loteService } from '@/services/loteService'
 import { metaDesempenhoService } from '@/services/metaDesempenhoService'
@@ -346,12 +350,13 @@ import { usuarioService } from '@/services/usuarioService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import { formatarData, formatarNumero } from '@/utils/formatters'
 import type { Animal } from '@/types/animal'
-import { FINALIDADE_LOTE_LABEL, type FinalidadeLote, type Lote } from '@/types/lote'
+import type { FinalidadeLote, Lote } from '@/types/lote'
 import type { MetaDesempenho } from '@/types/metaDesempenho'
 import type { Propriedade } from '@/types/propriedade'
 import type { Usuario } from '@/types/usuario'
 
 const auth = useAuthStore()
+const fasesLote = useFasesLoteStore()
 
 const podeEditar = computed(() => auth.isAdmin || auth.isProdutor)
 
@@ -367,7 +372,7 @@ const sucesso = ref('')
 const editandoId = ref<number | null>(null)
 
 const numero = ref<number | null>(null)
-const finalidade = ref<FinalidadeLote>('CORTE')
+const finalidade = ref<FinalidadeLote>('')
 const capacidade = ref<number | null>(null)
 const dataCriacao = ref('')
 const propriedadeId = ref<number | null>(null)
@@ -498,7 +503,7 @@ async function carregarLotes() {
 
 function limparFormulario() {
   numero.value = null
-  finalidade.value = 'CORTE'
+  finalidade.value = ''
   capacidade.value = null
   dataCriacao.value = ''
   propriedadeId.value = null
@@ -511,6 +516,7 @@ async function salvarLote() {
 
   if (
     numero.value === null ||
+    !finalidade.value ||
     capacidade.value === null ||
     propriedadeId.value === null ||
     !dataCriacao.value
@@ -597,6 +603,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       carregarLotes(),
+      fasesLote.carregarFases(),
       animalService.listAll().then((dados) => {
         animais.value = dados
       }),

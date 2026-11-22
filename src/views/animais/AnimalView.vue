@@ -40,7 +40,7 @@
                   :value="lote.id"
                   :disabled="loteBloqueado(lote)"
                 >
-                  Lote {{ lote.numero }} - {{ FINALIDADE_LOTE_LABEL[lote.finalidade] }}
+                  Lote {{ lote.numero }} - {{ fasesLote.descricaoFase(lote.finalidade) }}
                   ({{ ativosPorLote.get(lote.id) ?? 0 }}/{{ lote.capacidade }}{{ loteLotado(lote) ? ' - lotado' : '' }})
                 </option>
               </optgroup>
@@ -408,6 +408,7 @@
 import { computed, onMounted, ref } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useFasesLoteStore } from '@/stores/fasesLote'
 import { animalService } from '@/services/animalService'
 import { carenciaService } from '@/services/carenciaService'
 import { loteService } from '@/services/loteService'
@@ -423,11 +424,12 @@ import {
   type SexoAnimal,
   type StatusAnimal,
 } from '@/types/animal'
-import { FINALIDADE_LOTE_LABEL, type Lote } from '@/types/lote'
+import type { Lote } from '@/types/lote'
 import type { Propriedade } from '@/types/propriedade'
 import type { Usuario } from '@/types/usuario'
 
 const auth = useAuthStore()
+const fasesLote = useFasesLoteStore()
 
 const animais = ref<Animal[]>([])
 const buscaBrinco = ref('')
@@ -699,6 +701,9 @@ async function salvarStatus() {
 }
 
 onMounted(async () => {
+  // Só para os nomes das fases: se falhar, o código da fase aparece no lugar.
+  fasesLote.carregarFases().catch((err) => console.error('Falha ao carregar as fases do lote', err))
+
   try {
     const [dadosAnimais, dadosLotes, dadosPropriedades, dadosUsuarios] = await Promise.all([
       animalService.listAll(),
