@@ -7,8 +7,6 @@ export const alertaService = {
   },
 
   atualizarStatusAlerta(id: number, status: StatusAlerta) {
-    return http.put<Alerta>(
-      `/alertas/${id}/status?status=${encodeURIComponent(status)}`,
-    )
+    return http.put<Alerta>(`/alertas/${id}/status`, { status })
   },
 }
