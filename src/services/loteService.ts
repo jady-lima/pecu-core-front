@@ -1,9 +1,14 @@
 import { http } from '@/services/http'
-import type { Lote, LotePayload } from '@/types/lote'
+import type { FaseLote, Lote, LotePayload } from '@/types/lote'
 
 export const loteService = {
   listAll() {
     return http.get<Lote[]>('/lotes')
+  },
+
+
+  listFases() {
+    return http.get<FaseLote[]>('/lotes/fases')
   },
 
   create(payload: LotePayload) {

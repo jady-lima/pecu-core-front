@@ -1,18 +1,9 @@
-export type FinalidadeLote =
-  | 'CORTE'
-  | 'RECRIA'
-  | 'ENGORDA'
-  | 'REPRODUCAO'
-  | 'QUARENTENA'
-  | 'DESMAME'
+/** Código da fase do lote. As fases válidas vêm do back (GET /lotes/fases) e mudam conforme a aplicação. */
+export type FinalidadeLote = string
 
-export const FINALIDADE_LOTE_LABEL: Record<FinalidadeLote, string> = {
-  CORTE: 'Corte',
-  RECRIA: 'Recria',
-  ENGORDA: 'Engorda',
-  REPRODUCAO: 'Reprodução',
-  QUARENTENA: 'Quarentena',
-  DESMAME: 'Desmame',
+export interface FaseLote {
+  codigo: FinalidadeLote
+  descricao: string
 }
 
 export interface Lote {

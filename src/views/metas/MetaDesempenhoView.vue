@@ -44,7 +44,7 @@
               :class="editandoFase === fase ? 'bg-amber-50' : ''"
             >
               <td class="px-4 py-3 font-medium text-slate-900">
-                {{ FINALIDADE_LOTE_LABEL[fase] }}
+                {{ fasesLote.descricaoFase(fase) }}
               </td>
 
               <td class="px-4 py-3 text-slate-700">
@@ -134,10 +134,12 @@ import PageLayout from '@/components/PageLayout.vue'
 import { metaDesempenhoService } from '@/services/metaDesempenhoService'
 import { getApiErrorMessage } from '@/utils/apiErrors'
 import { formatarNumero } from '@/utils/formatters'
-import { FINALIDADE_LOTE_LABEL, type FinalidadeLote } from '@/types/lote'
+import { useFasesLoteStore } from '@/stores/fasesLote'
+import type { FinalidadeLote } from '@/types/lote'
 import type { MetaDesempenho } from '@/types/metaDesempenho'
 
-const FASES = Object.keys(FINALIDADE_LOTE_LABEL) as FinalidadeLote[]
+const fasesLote = useFasesLoteStore()
+const FASES = computed(() => fasesLote.fases.map((fase) => fase.codigo))
 
 const metas = ref<MetaDesempenho[]>([])
 const valores = reactive<Partial<Record<FinalidadeLote, number | ''>>>({})
@@ -149,7 +151,7 @@ const sucesso = ref('')
 
 const metaPorFase = computed(() => new Map(metas.value.map((meta) => [meta.fase, meta])))
 
-const fasesSemMeta = computed(() => FASES.filter((fase) => !metaPorFase.value.has(fase)).length)
+const fasesSemMeta = computed(() => FASES.value.filter((fase) => !metaPorFase.value.has(fase)).length)
 
 async function carregarMetas() {
   metas.value = await metaDesempenhoService.listAll()
@@ -162,7 +164,7 @@ async function salvarMeta(fase: FinalidadeLote) {
   const gmdEsperado = valores[fase]
 
   if (typeof gmdEsperado !== 'number' || gmdEsperado <= 0) {
-    erro.value = `Informe um GMD maior que zero para ${FINALIDADE_LOTE_LABEL[fase]}.`
+    erro.value = `Informe um GMD maior que zero para ${fasesLote.descricaoFase(fase)}.`
     return
   }
 
@@ -173,10 +175,10 @@ async function salvarMeta(fase: FinalidadeLote) {
   try {
     if (metaExistente) {
       await metaDesempenhoService.update(metaExistente.id, { fase, gmdEsperado })
-      sucesso.value = `Meta de ${FINALIDADE_LOTE_LABEL[fase]} atualizada com sucesso.`
+      sucesso.value = `Meta de ${fasesLote.descricaoFase(fase)} atualizada com sucesso.`
     } else {
       await metaDesempenhoService.create({ fase, gmdEsperado })
-      sucesso.value = `Meta de ${FINALIDADE_LOTE_LABEL[fase]} cadastrada com sucesso.`
+      sucesso.value = `Meta de ${fasesLote.descricaoFase(fase)} cadastrada com sucesso.`
     }
 
     await carregarMetas()
@@ -217,7 +219,7 @@ async function excluirMeta(fase: FinalidadeLote) {
     return
   }
 
-  if (!confirm(`Excluir a meta padrão de ${FINALIDADE_LOTE_LABEL[fase]}? Lotes dessa finalidade sem meta própria deixam de ser comparados no Desempenho.`)) {
+  if (!confirm(`Excluir a meta padrão de ${fasesLote.descricaoFase(fase)}? Lotes dessa finalidade sem meta própria deixam de ser comparados no Desempenho.`)) {
     return
   }
 
@@ -227,7 +229,7 @@ async function excluirMeta(fase: FinalidadeLote) {
   try {
     await metaDesempenhoService.remove(meta.id)
     await carregarMetas()
-    sucesso.value = `Meta de ${FINALIDADE_LOTE_LABEL[fase]} excluída com sucesso.`
+    sucesso.value = `Meta de ${fasesLote.descricaoFase(fase)} excluída com sucesso.`
   } catch (err) {
     console.error('Falha ao excluir meta de desempenho', err)
     erro.value = getApiErrorMessage(err, 'Não foi possível excluir a meta.')
@@ -236,7 +238,7 @@ async function excluirMeta(fase: FinalidadeLote) {
 
 onMounted(async () => {
   try {
-    await carregarMetas()
+    await Promise.all([carregarMetas(), fasesLote.carregarFases()])
   } catch (err) {
     console.error('Falha ao carregar metas de desempenho', err)
     erro.value = getApiErrorMessage(err, 'Não foi possível carregar as metas.')

@@ -84,7 +84,7 @@
             <dt class="text-xs font-medium uppercase text-slate-500">Lote</dt>
             <dd class="mt-1 text-slate-900">
               Lote {{ ficha.numeroLote }}
-              <span class="text-sm text-slate-500">- {{ FINALIDADE_LOTE_LABEL[ficha.finalidadeLote] }}</span>
+              <span class="text-sm text-slate-500">- {{ fasesLote.descricaoFase(ficha.finalidadeLote) }}</span>
             </dd>
           </div>
 
@@ -302,6 +302,7 @@ import { useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import AnaliseIASection from '@/views/animais/AnaliseIASection.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useFasesLoteStore } from '@/stores/fasesLote'
 import { alimentacaoService } from '@/services/alimentacaoService'
 import { animalService } from '@/services/animalService'
 import { custoService } from '@/services/custoService'
@@ -318,7 +319,6 @@ import {
   type FichaAnimal,
 } from '@/types/animal'
 import { ORIGEM_CUSTO_LABEL, TIPO_CUSTO_LABEL, type Custo } from '@/types/custo'
-import { FINALIDADE_LOTE_LABEL } from '@/types/lote'
 import type { Medicamento } from '@/types/medicamento'
 import type { Pesagem } from '@/types/pesagem'
 import type { Vacinacao } from '@/types/vacinacao'
@@ -340,6 +340,7 @@ const ACOES = [
 ]
 
 const auth = useAuthStore()
+const fasesLote = useFasesLoteStore()
 const route = useRoute()
 
 const ficha = ref<FichaAnimal | null>(null)
@@ -426,6 +427,9 @@ const idade = computed(() => {
 })
 
 onMounted(async () => {
+  // Só para o nome da fase: se falhar, o código da fase aparece no lugar.
+  fasesLote.carregarFases().catch((err) => console.error('Falha ao carregar as fases do lote', err))
+
   try {
     ficha.value = await animalService.getFicha(String(route.params.id))
   } catch (err) {
